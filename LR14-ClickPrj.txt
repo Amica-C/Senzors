@@ -1,0 +1,36 @@
+mozno toto - instalacia a postup, ako treba upravit SDK 1.3 pre RAK3172
+https://docs.rakwireless.com/product-categories/wisduo/rak3172-module/low-level-development/
+c:\Users\Milan\AppData\Local\Arduino15\packages\rak_rui\hardware\stm32\4.2.2\cores\STM32WLE\component\service\lora\.. 
+
+
+
+That's a RAK3172-based LR 14 click board. You can reprogram the RAK3172 module on it, which contains an STM32WLE5CCU6 chip.
+Here are the steps you'll need to follow in STM32CubeIDE to create a project and prepare for uploading your code:
+
+1. Create a New Project in STM32CubeIDE 💻
+Select the Target MCU
+When starting a new project, select the specific microcontroller used inside the RAK3172 module.
+    Select File > New > STM32 Project.
+    In the Target Selection window, go to the MCU/MPU Selector tab.
+    Search for and select STM32WLE5CCU6. This is the LoRaWAN® System-on-Chip (SoC) inside the RAK3172 module.
+
+2. Base Settings and Configuration (STM32CubeMX) ⚙️
+After selecting the MCU, the STM32CubeMX configuration environment will open. Here, you'll set up the clock, peripherals, and debug settings.
+
+    Clock Configuration
+        Go to the Clock Configuration tab. You'll need to enable the High-Speed External (HSE) crystal oscillator for the main clock source and the Low-Speed External (LSE) for the Real-Time Clock (RTC), as recommended for LoRa applications. The RAK3172 module includes both the 32 MHz (HSE) and 32.768 kHz (LSE) crystals.
+
+    Debug Settings
+        Go to the Pinout & Configuration tab.
+        Under System Core > SYS, set the Debug option to Serial Wire (SWD). This configures the necessary pins for ST-Link programming.
+
+    LoRaWAN Peripherals (Optional but likely needed)
+        If you're writing a LoRaWAN application, you will need to enable and configure the required peripherals, such as:
+            RF (Radio Frequency) section: This is critical for LoRa.
+            UART: For debugging or communicating with a host system (likely connected to the TX and RX pins on the LR 14 click board).
+            SPI/I2C: If you are connecting external sensors to the other click pins (SCK, SDO, SDI, SDA).
+
+    Pin Configuration
+        The pins on the LR 14 click board map to specific pins on the STM32WLE5CCU6. You would need to refer to the RAK3172 datasheet/schematic to know which MCU pin corresponds to the board's headers (e.g., TX, RX, CS). You'll set these pin functions here.
+
+

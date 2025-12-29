@@ -1,0 +1,44 @@
+SWD - experimentalne 
+
+      O   O
+       o o - GND
+CLK -  o o - RST
+DIO -  o o - VDD
+        O
+
+
+UART2 - (1,2 .... PA3,PA2) -> vystup na doske
+UART1 - (4,5 .... PB6,PB7) -> USB?
+I2C - (9,10 .... PA12,PA11) -> vystup na doske
+
+antena:
+PB8	 RF Switch Control 1
+PC13 RF Switch Control 2
+
+SPI:
+MOSI—Master Output Slave Input
+MISO—Master Input Slave Output
+SCK-Serial ClocK
+SDO-SPI Data OUT == MISO
+SDI-SPI Data IN  == MOSI
+POCI-Peripheral Out / Controller In
+PICO-Peripheral In / Controller Out
+
+SDO-MOSI-POCI - 14,SDO PA7
+SDI-MISO-PICO - 13,SDI PA6
+CLK - PA5
+CS - PA4
+
+
+temp&hum23 -> 0x44
+ambient21  -> 0x29
+barometer8 -> 0x5C(0x7E)
+
+NCF4 -> 0x2D(Mailbox/Control), 0x53(user memory, alt 0x50), 0x57(system memory - register)
+
+Found I2C device at 0x29
+Found I2C device at 0x2D
+Found I2C device at 0x44
+Found I2C device at 0x53
+Found I2C device at 0x57
+

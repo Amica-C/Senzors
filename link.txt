@@ -1,0 +1,14 @@
+rak module v cube
+https://docs.rakwireless.com/Product-Categories/WisDuo/RAK3172-Module/Low-Level-Development/
+
+postup instalacie prostredia: Arduiono
+https://docs.rakwireless.com/product-categories/software-apis-and-libraries/rui3/supported-ide/#visual-studio-ide
+
+https://github.com/RAKWireless/RAK-STM32-RUI
+
+library pre arduino
+https://downloads.rakwireless.com/#RUI/RUI3/Library/
+
+
+
+https://www.mikroe.com/lr-14-click
