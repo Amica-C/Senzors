@@ -1,5 +1,9 @@
 # Vyvojové prostredie pre STM32Cube
-Ako základ je použitý RAK 3172 založený na CPU STM32WLE5CC
+Ako základ je použitý RAK 3172 založený na CPU STM32WLE5CC.
+<br>
+Na všetkých sezoroch a moduloch som musel odpájkovať odpory na SDA/SCL výstupoch - pullup na 3.3V
+<br>
+Samotný RAK má tiež tieto odpory, 10kOhm, to som tam nechal, ale aby som dostal na zbernicu SDA/SCL 5kOhm, musel som dodatočne pridať ďal paralerne odpory 10kOhm a tak mi to spadlo na požadovaných 5kOhm
 
 ## RAK3172: 
 - https://www.mikroe.com/lr-14-click
