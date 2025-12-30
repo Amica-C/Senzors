@@ -3,6 +3,9 @@
  *
  *  Created on: 27. 12. 2025
  *      Author: Milan
+ *
+ * Barometer 8 Click,  ILPS22QS
+ *       ILPS22QS
  */
 
 #ifndef INC_BAROMETER8_H_
