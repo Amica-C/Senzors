@@ -29,6 +29,9 @@ NVAC Click SCD41 senzor CO2, teploty a vlhkosti
 - https: https://www.mikroe.com/hvac-click
 - datasheet SCD41 [SCD41Datasheet](datasheets/SCD41Datasheet.pdf)
 - požadované napätie 3.3V, spotreba 0.2A pri žhavení
+<!---
+- ![](datasheets/hvac-click-thickbox_default-72x.jpg)
+-->
 
 NVAC Click SPS30 senzor pevných častí
 - napätie 5V - TTL, SDA/SCA 3.3V LVTTL
