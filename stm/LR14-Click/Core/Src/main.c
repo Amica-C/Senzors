@@ -158,6 +158,35 @@ void sensBuffer_Add(const char *format, ...)
 	vsprintf(_sensBuffer + len, format, argList);
 	va_end(argList);
 }
+
+/**
+ * @brief zapnutie/vypnutie senzorov
+ */
+void sensorsOnOff(uint8_t onOff)
+{
+	if (onOff)
+	{
+		writeLog("Sensors:on");
+		tempHum_On(&hi2c2);
+		ambient_On(&hi2c2);
+		barometer_On(&hi2c2);
+		nfc4_On(&hi2c2);
+		scd41_On(&hi2c2);
+		sps30_On(&hi2c2);
+	}
+	else
+	{
+		writeLog("Sensors:off");
+		tempHum_Off(&hi2c2);
+		ambient_Off(&hi2c2);
+		barometer_Off(&hi2c2);
+		nfc4_Off(&hi2c2);
+		scd41_Off(&hi2c2);
+		sps30_Off(&hi2c2);
+	}
+
+}
+
 /* USER CODE END 0 */
 
 /**
@@ -272,6 +301,7 @@ int main(void)
 	scd41_On(&hi2c2);
 	sps30_On(&hi2c2);
 	*/
+	sensorsOnOff(0);	// pri starte vsetko ok
 	while (1) //
 	{
 		/* USER CODE END WHILE */
@@ -281,27 +311,8 @@ int main(void)
 
 		if (sleeper_IsElapsed(&_sensorsOnOff))
 		{
-			if (_isSensorOn)
-			{
-				writeLog("Sensors:off");
-				tempHum_Off(&hi2c2);
-				ambient_Off(&hi2c2);
-				barometer_Off(&hi2c2);
-				nfc4_Off(&hi2c2);
-				scd41_Off(&hi2c2);
-				sps30_Off(&hi2c2);
-			}
-			else
-			{
-				writeLog("Sensors:on");
-				tempHum_On(&hi2c2);
-				ambient_On(&hi2c2);
-				barometer_On(&hi2c2);
-				nfc4_On(&hi2c2);
-				scd41_On(&hi2c2);
-				sps30_On(&hi2c2);
-			}
 			_isSensorOn = !_isSensorOn;
+			sensorsOnOff(_isSensorOn);
 			sleeper_Next(&_sensorsOnOff);
 		}
 
@@ -377,7 +388,7 @@ int main(void)
 				// uint16_t addr, uint8_t *pData, uint16_t len
 				status = nfc4_ReadEEPROM(&hi2c2, 0, &dat, 1);
 				if (status == HAL_OK)
-					sensBuffer_Add("nfc4 tag read:%d ", (int) dat);
+					sensBuffer_Add("nfc4 read:%d ", (int) dat);
 			}
 
 			/**/
