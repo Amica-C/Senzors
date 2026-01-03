@@ -52,14 +52,14 @@ HAL_DMA_StateTypeDef Uart_Info(const char *strInfo);
 
 /**
  * @brief zaciatok citania
+ * @param uart - handle, na uart, ktory sa pouziva
  */
-HAL_DMA_StateTypeDef Uart_StartReceving();
-
+HAL_DMA_StateTypeDef Uart_StartReceving(UART_HandleTypeDef *uart);
 
 /**
- * @brief dalsie posunutie sa na citanie z UARTU
+ * @brief pokracovanie v dalsom citani, ak dosli data
  */
-HAL_DMA_StateTypeDef Uart_ContinueReceiving();
+HAL_DMA_StateTypeDef Uart_NextReceving();
 
 /* USER CODE END Prototypes */
 

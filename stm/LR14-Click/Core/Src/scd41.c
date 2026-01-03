@@ -5,7 +5,7 @@
  *      Author: Milan
  */
 
-#include "hvac.h"
+#include <scd41.h>
 
 // I2C Addresses
 #define SCD41_ADDR (0x62 << 1)
@@ -26,13 +26,9 @@
 #define SCD41_CMD_GET_DATA_READY 0xe4b8
 #define SCD41_CMD_REINIT         0x3646
 
-// SPS30 Commands
-#define SPS30_CMD_START_MEAS     0x0010
-#define SPS30_CMD_READ_MEAS      0x0300
 
 // default nastavenie
 scd41_t _scd41Data = { .altitude = -1, .co2 = -1, .humidity = -1.0f, .temperature = -1000.0f, .is = 0 };
-sps30_t _sps30Data = { .pm01_0 = 0.0f, .pm02_5 = 0.0f, .pm04_0 = 0.0f, .pm10_0 = 0.0f, .is = 0 };
 
 // Internal Helper: CRC-8 Calculation
 static uint8_t hvac_CalculateCRC(uint8_t *data, uint8_t len)
@@ -64,22 +60,15 @@ static HAL_StatusTypeDef scd41_WriteWithCRC(I2C_HandleTypeDef *hi2c, uint16_t cm
 	return HAL_I2C_Master_Transmit(hi2c, SCD41_ADDR, tx, 5, 100);
 }
 
-int8_t scd41_Is(I2C_HandleTypeDef *hi2c, int8_t tryInit)
-{
-	if (!_scd41Data.is && tryInit)
-		scd41_Init(hi2c);
-	return _scd41Data.is;
-}
-
-HAL_StatusTypeDef scd41_Start(I2C_HandleTypeDef *hi2c)
+static HAL_StatusTypeDef scd41_onOff(I2C_HandleTypeDef *hi2c, uint16_t onOff)
 {
 	HAL_StatusTypeDef status = HAL_I2C_IsDeviceReady(hi2c, SCD41_ADDR, 2, 2);	// prva kontrola
 
 	if (status == HAL_OK)
 	{
 		uint8_t cmd[2];
-		cmd[0] = (SCD41_CMD_START >> 8);
-		cmd[1] = (SCD41_CMD_START & 0xFF);
+		cmd[0] = (onOff >> 8);
+		cmd[1] = (onOff & 0xFF);
 		status = HAL_I2C_Master_Transmit(hi2c, SCD41_ADDR, cmd, 2, HAL_MAX_DELAY);
 		if (status == HAL_OK)
 			HAL_Delay(500);	// Wait for sensor to process start
@@ -87,20 +76,21 @@ HAL_StatusTypeDef scd41_Start(I2C_HandleTypeDef *hi2c)
 	return status;
 }
 
-HAL_StatusTypeDef scd41_Stop(I2C_HandleTypeDef *hi2c)
+int8_t scd41_Is(I2C_HandleTypeDef *hi2c, int8_t tryInit)
 {
-	HAL_StatusTypeDef status = HAL_I2C_IsDeviceReady(hi2c, SCD41_ADDR, 2, 2);	// prva kontrola
+	if (!_scd41Data.is && tryInit)
+		scd41_Init(hi2c);
+	return _scd41Data.is;
+}
 
-	if (status == HAL_OK)
-	{
-		uint8_t cmd[2];
-		cmd[0] = (SCD41_CMD_STOP_PERIODIC >> 8);
-		cmd[1] = (SCD41_CMD_STOP_PERIODIC & 0xFF);
-		status = HAL_I2C_Master_Transmit(hi2c, SCD41_ADDR, cmd, 2, HAL_MAX_DELAY);
-		if (status == HAL_OK)
-			HAL_Delay(500);	// Wait for sensor to process stop
-	}
-	return status;
+HAL_StatusTypeDef scd41_On(I2C_HandleTypeDef *hi2c)
+{
+	return scd41_onOff(hi2c, SCD41_CMD_START);
+}
+
+HAL_StatusTypeDef scd41_Off(I2C_HandleTypeDef *hi2c)
+{
+	return scd41_onOff(hi2c, SCD41_CMD_STOP_PERIODIC);
 }
 
 HAL_StatusTypeDef scd41_Init(I2C_HandleTypeDef *hi2c)
@@ -113,7 +103,7 @@ HAL_StatusTypeDef scd41_Init(I2C_HandleTypeDef *hi2c)
 		do
 		{
 			// 1. Send Stop Periodic Measurement (ensure it's idle)
-			scd41_Stop(hi2c);
+			scd41_Off(hi2c);
 
 			cmd[0] = (SCD41_CMD_REINIT >> 8);
 			cmd[1] = (SCD41_CMD_REINIT & 0xFF);
@@ -230,127 +220,4 @@ HAL_StatusTypeDef scd41_Read(I2C_HandleTypeDef *hi2c)
 	return status;
 }
 
-HAL_StatusTypeDef sps30_Init(I2C_HandleTypeDef *hi2c)
-{
-	HAL_StatusTypeDef ret = HAL_I2C_IsDeviceReady(hi2c, SPS30_ADDR, 2, 2);	// prva kontrola
 
-	if (ret == HAL_OK)
-	{
-		uint8_t sps_cmd[5];
-		sps_cmd[0] = (SPS30_CMD_START_MEAS >> 8);
-		sps_cmd[1] = (SPS30_CMD_START_MEAS & 0xFF);
-		sps_cmd[2] = 0x03; // Float format
-		sps_cmd[3] = 0x00;
-		sps_cmd[4] = hvac_CalculateCRC(&sps_cmd[2], 2);
-
-		ret = HAL_I2C_Master_Transmit(hi2c, SPS30_ADDR, sps_cmd, 5, 100);
-	}
-	return ret;
-}
-
-#if 0
-
-#define SCD41_ADDR (0x62 << 1)
-
-// Commands
-#define CMD_START_PERIODIC_MEAS 0x21b1
-#define CMD_READ_MEASUREMENT    0xec05
-#define CMD_GET_DATA_READY      0xe4b8
-#define CMD_STOP_PERIODIC_MEAS  0x3f86
-#define CMD_SET_ALTITUDE      0x2427
-#define CMD_SET_TEMP_OFFSET   0x241d
-
-scd41_t _scd41Data = { .altitude = -1, .co2 = -1, .humidity = -1.0f, .temperature = -1000.0f, .is = 0 };
-
-static uint8_t hvac_CheckCrc(uint8_t *data, uint8_t len, uint8_t checksum)
-{
-	uint8_t crc = 0xFF; // Initialization
-	for (uint8_t i = 0; i < len; i++)
-	{
-		crc ^= data[i];
-		for (uint8_t bit = 8; bit > 0; --bit)
-		{
-			if (crc & 0x80)
-			{
-				crc = (crc << 1) ^ 0x31;
-			}
-			else
-			{
-				crc = (crc << 1);
-			}
-		}
-	}
-	return (crc == checksum);
-}
-
-// Helper to send a command with 16-bit data and a CRC
-static HAL_StatusTypeDef hvac_WriteWithCRC(I2C_HandleTypeDef *hi2c, uint16_t command, uint16_t data)
-{
-	uint8_t buffer[5];
-	buffer[0] = (command >> 8);
-	buffer[1] = (command & 0xFF);
-	buffer[2] = (data >> 8);
-	buffer[3] = (data & 0xFF);
-
-	// Calculate CRC for the 2 data bytes
-	uint8_t crc = 0xFF;
-	for (uint8_t i = 2; i < 4; i++)
-	{
-		crc ^= buffer[i];
-		for (uint8_t bit = 8; bit > 0; --bit)
-		{
-			if (crc & 0x80)
-				crc = (crc << 1) ^ 0x31;
-			else
-				crc = (crc << 1);
-		}
-	}
-	buffer[4] = crc;
-
-	return HAL_I2C_Master_Transmit(hi2c, SCD41_ADDR, buffer, 5, HAL_MAX_DELAY);
-}
-
-static HAL_StatusTypeDef hvac_SetAltitude(I2C_HandleTypeDef *hi2c, uint16_t meters)
-{
-	return hvac_WriteWithCRC(hi2c, CMD_SET_ALTITUDE, meters);
-}
-
-// ----------------------------- public -------------------------------------
-HAL_StatusTypeDef hvac_Init(I2C_HandleTypeDef *hi2c)
-{
-	uint8_t cmd[2];
-	HAL_StatusTypeDef ret = HAL_I2C_IsDeviceReady(hi2c, SCD41_ADDR, 2, 2);	// prva kontrola
-
-	if (ret == HAL_OK)
-	{
-		do
-		{
-			// 1. Send Stop Periodic Measurement (ensure it's idle)
-			cmd[0] = (CMD_STOP_PERIODIC_MEAS >> 8);
-			cmd[1] = (CMD_STOP_PERIODIC_MEAS & 0xFF);
-			if ((ret = HAL_I2C_Master_Transmit(hi2c, SCD41_ADDR, cmd, 2, HAL_MAX_DELAY)) != HAL_OK)
-				break;
-
-			HAL_Delay(500);	// Wait for sensor to process stop
-			// 2. altitude setting
-			if (_scd41Data.altitude > 0)
-				if ((ret = hvac_SetAltitude(hi2c, _scd41Data.altitude)) != HAL_OK)
-					break;
-
-			// 3. Set Temp Offset (e.g., 2.5 degrees)
-			//SCD41_SetTempOffset(hi2c, 2.5f);
-			//HAL_Delay(10);
-
-			// 4. Start Periodic Measurement
-			cmd[0] = (CMD_START_PERIODIC_MEAS >> 8);
-			cmd[1] = (CMD_START_PERIODIC_MEAS & 0xFF);
-			if ((ret = HAL_I2C_Master_Transmit(hi2c, SCD41_ADDR, cmd, 2, HAL_MAX_DELAY)) != HAL_OK)
-				break;
-
-			_scd41Data.is = 1;
-
-		} while (0);
-	}
-	return ret;
-}
-#endif

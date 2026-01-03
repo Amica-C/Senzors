@@ -35,7 +35,8 @@
 #include "flash12.h"
 #include "nfctag4.h"
 #include "barometer8.h"
-#include "hvac.h"
+#include "sps30.h"
+#include "scd41.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -57,6 +58,8 @@
 
 /* USER CODE BEGIN PV */
 sleeper_t _readData = { };	// casovac citanie dat zo senzorov
+sleeper_t _sensorsOnOff = {};// casovac zapinania,vypinania senzorov
+uint8_t _isSensorOn = 0;	// indikator, ci senzory idu alebo nie
 flashCS_t _flash = { .csPort = SPI1_CS_GPIO_Port, .csPin = SPI1_CS_Pin, .spi = &hspi1, .is = 0 };
 
 volatile uint8_t nfc_interrupt_flag = 0;
@@ -121,6 +124,8 @@ void I2C_Scan(I2C_HandleTypeDef *hi2c) //
 	}
 	if (!found)
 		writeLog("no I2C devices");
+	else
+		HAL_Delay(1500);
 }
 
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
@@ -138,48 +143,64 @@ void nfc4_OnMailboxData(uint8_t *data, uint16_t len)
 //	writeLog("mam data");
 	// toto nefunguje, MailBox proste nejde, vzdavam to a jebem na to.....
 }
+
+void sensBuffer_Reset()
+{
+	_sensBuffer[0] = '\0';
+}
+
+void sensBuffer_Add(const char *format, ...)
+{
+	va_list argList;
+	va_start(argList, format);
+	int len = strlen(_sensBuffer);
+
+	vsprintf(_sensBuffer + len, format, argList);
+	va_end(argList);
+}
 /* USER CODE END 0 */
 
 /**
-  * @brief  The application entry point.
-  * @retval int
-  */
+ * @brief  The application entry point.
+ * @retval int
+ */
 int main(void)
 {
 
-  /* USER CODE BEGIN 1 */
+	/* USER CODE BEGIN 1 */
 	HAL_StatusTypeDef status;
-  /* USER CODE END 1 */
+	/* USER CODE END 1 */
 
-  /* MCU Configuration--------------------------------------------------------*/
+	/* MCU Configuration--------------------------------------------------------*/
 
-  /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
-  HAL_Init();
+	/* Reset of all peripherals, Initializes the Flash interface and the Systick. */
+	HAL_Init();
 
-  /* USER CODE BEGIN Init */
+	/* USER CODE BEGIN Init */
 
-  /* USER CODE END Init */
+	/* USER CODE END Init */
 
-  /* Configure the system clock */
-  SystemClock_Config();
+	/* Configure the system clock */
+	SystemClock_Config();
 
-  /* USER CODE BEGIN SysInit */
+	/* USER CODE BEGIN SysInit */
 
-  /* USER CODE END SysInit */
+	/* USER CODE END SysInit */
 
-  /* Initialize all configured peripherals */
-  MX_GPIO_Init();
-  MX_LoRaWAN_Init();
-  MX_USART1_UART_Init();
-  MX_I2C2_Init();
-  MX_SPI1_Init();
-  MX_USART2_UART_Init();
-  /* USER CODE BEGIN 2 */
+	/* Initialize all configured peripherals */
+	MX_GPIO_Init();
+	MX_LoRaWAN_Init();
+	MX_USART1_UART_Init();
+	MX_I2C2_Init();
+	MX_SPI1_Init();
+	MX_USART2_UART_Init();
+	/* USER CODE BEGIN 2 */
 	sleeper_Init(&_readData, 3000);
+	sleeper_Init(&_sensorsOnOff, 30000);
 
 	// pripadne cistanie ser-portu
 	writeLog("start UUART read");
-	status = Uart_StartReceving();
+	status = Uart_StartReceving(&huart2);
 	writeLog("UART read: %d", (int) status);
 	//I2C_Scan(&hi2c2);
 
@@ -199,12 +220,9 @@ int main(void)
 	status = nfc4_Init(&hi2c2);
 	writeLog((status == HAL_OK) ? "nfc4 tag: Init OK" : "nfc4 tag: Init failed.");
 
-	//_scd41Data.altitude = 340;	// RV
+	_scd41Data.altitude = 340;	// RV
 	status = scd41_Init(&hi2c2);
 	writeLog((status == HAL_OK) ? "sdc41 senzor: Init OK" : "sdc41 senzor: Init failed.");
-
-	status = scd41_Start(&hi2c2);
-	writeLog((status == HAL_OK) ? "sdc41 senzor: start OK" : "sdc41 senzor: start failed.");
 
 	status = sps30_Init(&hi2c2);
 	writeLog((status == HAL_OK) ? "sps30 senzor: Init OK" : "sps30 senzor: Init failed.");
@@ -242,24 +260,56 @@ int main(void)
 
 	 }// */
 
-  /* USER CODE END 2 */
+	/* USER CODE END 2 */
 
-  /* Infinite loop */
-  /* USER CODE BEGIN WHILE */
+	/* Infinite loop */
+	/* USER CODE BEGIN WHILE */
+	/*
+	tempHum_On(&hi2c2);
+	ambient_On(&hi2c2);
+	barometer_On(&hi2c2);
+	nfc4_On(&hi2c2);
+	scd41_On(&hi2c2);
+	sps30_On(&hi2c2);
+	*/
 	while (1) //
 	{
-    /* USER CODE END WHILE */
-    MX_LoRaWAN_Process();
+		/* USER CODE END WHILE */
+		MX_LoRaWAN_Process();
 
-    /* USER CODE BEGIN 3 */
+		/* USER CODE BEGIN 3 */
+
+		if (sleeper_IsElapsed(&_sensorsOnOff))
+		{
+			if (_isSensorOn)
+			{
+				writeLog("Sensors:off");
+				tempHum_Off(&hi2c2);
+				ambient_Off(&hi2c2);
+				barometer_Off(&hi2c2);
+				nfc4_Off(&hi2c2);
+				scd41_Off(&hi2c2);
+				sps30_Off(&hi2c2);
+			}
+			else
+			{
+				writeLog("Sensors:on");
+				tempHum_On(&hi2c2);
+				ambient_On(&hi2c2);
+				barometer_On(&hi2c2);
+				nfc4_On(&hi2c2);
+				scd41_On(&hi2c2);
+				sps30_On(&hi2c2);
+			}
+			_isSensorOn = !_isSensorOn;
+			sleeper_Next(&_sensorsOnOff);
+		}
 
 		if (sleeper_IsElapsed(&_readData))
 		{
-			int len;
-
 			HAL_GPIO_TogglePin(USER_LED_GPIO_Port, USER_LED_Pin);
 			_sensBuffer[0] = '\0';
-			len = 0;
+			sensBuffer_Reset();
 
 			if (tempHum_Is(&hi2c2, _tryInit))
 			{
@@ -267,14 +317,13 @@ int main(void)
 				if (status == HAL_OK) //
 				{
 					//writeLog("temp:%d hum:%d", (int) (_tempHumData.temperature * 100.0f), (int) (_tempHumData.humidity * 100.0f));
-					sprintf(_sensBuffer + len, "temp:%d hum:%d ", (int) (_tempHumData.temperature * 100.0f), (int) (_tempHumData.humidity * 100.0f));
+					sensBuffer_Add("temp:%d hum:%d ", (int) (_tempHumData.temperature * 100.0f), (int) (_tempHumData.humidity * 100.0f));
 				}
 				else //
 				{
 					//writeLog("temp read error:%d", (int) status);
 				}
 			}
-			len = strlen(_sensBuffer);
 
 			if (ambient_Is(&hi2c2, _tryInit))
 			{
@@ -284,14 +333,13 @@ int main(void)
 				if (status == HAL_OK) //
 				{
 					//writeLog("lux:%d", (int) (lux * 100.0f));
-					sprintf(_sensBuffer + len, "lux:%d ", (int) (lux * 100.0f));
+					sensBuffer_Add("lux:%d ", (int) (lux * 100.0f));
 				}
 				else //
 				{
 					//writeLog("lux read error:%d", (int) status);
 				}
 			}
-			len = strlen(_sensBuffer);
 
 			if (barometer_Is(&hi2c2, _tryInit))
 			{
@@ -301,14 +349,13 @@ int main(void)
 				if (status == HAL_OK)
 				{
 					//writeLog("pressure:%d, temp:%d", (int) (pressure * 100.0f), (int) (temp * 100.0f));
-					sprintf(_sensBuffer + len, "pressure:%d, temp:%d ", (int) (pressure * 100.0f), (int) (temp * 100.0f));
+					sensBuffer_Add("pressure:%d, temp:%d ", (int) (pressure * 100.0f), (int) (temp * 100.0f));
 				}
 				else
 				{
 					//writeLog("pressure error:%d", (int) status);
 				}
 			}
-			len = strlen(_sensBuffer);
 
 			if (flash_Is(&_flash, _tryInit))
 			{
@@ -320,9 +367,8 @@ int main(void)
 				char bufRead[20] = { };
 				status = flash_Read(&_flash, 0x400, (uint8_t*) bufRead, sizeof(bufRead) - 1);
 				if (status == HAL_OK)
-					sprintf(_sensBuffer + len, "flash read:%s ", bufRead);
+					sensBuffer_Add("flash read:%s ", bufRead);
 			}
-			len = strlen(_sensBuffer);
 
 			if (nfc4_Is(&hi2c2, _tryInit))
 			{
@@ -331,9 +377,8 @@ int main(void)
 				// uint16_t addr, uint8_t *pData, uint16_t len
 				status = nfc4_ReadEEPROM(&hi2c2, 0, &dat, 1);
 				if (status == HAL_OK)
-					sprintf(_sensBuffer + len, "nfc4 tag read:%d ", (int) dat);
+					sensBuffer_Add("nfc4 tag read:%d ", (int) dat);
 			}
-			len = strlen(_sensBuffer);
 
 			/**/
 			if (scd41_Is(&hi2c2, _tryInit))
@@ -342,31 +387,51 @@ int main(void)
 				switch (status)
 				{
 					case HAL_OK:
-						sprintf(_sensBuffer + len, "scd41 co2:%d temp:%d hum:%d ", (int) _scd41Data.co2, (int) (_scd41Data.temperature * 100.0f),
-								(int) (_scd41Data.humidity * 100.0f));
+						sensBuffer_Add("scd41 co2:%d temp:%d hum:%d ", (int) _scd41Data.co2, (int) (_scd41Data.temperature * 100.0f), (int) (_scd41Data.humidity * 100.0f));
 					break;
 					case HAL_BUSY:
-						sprintf(_sensBuffer + len, "scd41 busy ");
+						//sensBuffer_Add("scd41 busy ");
 					break;
 					default:
-						sprintf(_sensBuffer + len, "scd41 error ");
+						sensBuffer_Add("scd41 error ");
 					break;
 				}
 			}
-			len = strlen(_sensBuffer);
 
-			if (len > 0)
+			if (sps30_Is(&hi2c2, 1))
+			{
+				status = sps30_Read(&hi2c2);
+				switch (status)
+				{
+					case HAL_OK:
+					{
+						char *txt = NULL;
+
+						sps30_ClassifyPM25(&txt);
+						sensBuffer_Add("sps30: %s ", ((txt != NULL) ? txt : "(none)"));
+					}
+					break;
+					case HAL_BUSY:
+						//sensBuffer_Add("sps30 busy ");
+					break;
+					default:
+						sensBuffer_Add("sps30 error ");
+					break;
+				}
+			}
+
+			if (_sensBuffer[0])
 				writeLogNL(_sensBuffer);
 			sleeper_Next(&_readData);	// next az tu, lebo senzor moze mat odozvu
 		}
 		/*
-		if (scd41_Is(&hi2c2, _tryInit))
-		{
-			status = scd41_Read(&hi2c2);
-			if (status == HAL_OK)
-				writeLog("mam");
-		}
-		*/
+		 if (scd41_Is(&hi2c2, _tryInit))
+		 {
+		 status = scd41_Read(&hi2c2);
+		 if (status == HAL_OK)
+		 writeLog("mam");
+		 }
+		 */
 		if (nfc_interrupt_flag)
 		{
 			writeLog("nfc4 tag interrupt");	// tu neviem, co s tym.... a ci to ma vyznam
@@ -378,57 +443,55 @@ int main(void)
 		if (uart_data_ready)		//
 		{
 			writeLog("from:%s!", (const char*) uart_req_buf);
-			Uart_StartReceving();		// a pokracujeme v citani portu, data su nachystane v uart_req_buf
+			Uart_NextReceving();		// a pokracujeme v citani portu, data su nachystane v uart_req_buf
 		}
 	}
-  /* USER CODE END 3 */
+	/* USER CODE END 3 */
 }
 
 /**
-  * @brief System Clock Configuration
-  * @retval None
-  */
+ * @brief System Clock Configuration
+ * @retval None
+ */
 void SystemClock_Config(void)
 {
-  RCC_OscInitTypeDef RCC_OscInitStruct = {0};
-  RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
+	RCC_OscInitTypeDef RCC_OscInitStruct = { 0 };
+	RCC_ClkInitTypeDef RCC_ClkInitStruct = { 0 };
 
-  /** Configure the main internal regulator output voltage
-  */
-  __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE1);
+	/** Configure the main internal regulator output voltage
+	 */
+	__HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE1);
 
-  /** Initializes the CPU, AHB and APB buses clocks
-  */
-  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI;
-  RCC_OscInitStruct.HSIState = RCC_HSI_ON;
-  RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
-  RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
-  RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSI;
-  RCC_OscInitStruct.PLL.PLLM = RCC_PLLM_DIV1;
-  RCC_OscInitStruct.PLL.PLLN = 6;
-  RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV2;
-  RCC_OscInitStruct.PLL.PLLR = RCC_PLLR_DIV2;
-  RCC_OscInitStruct.PLL.PLLQ = RCC_PLLQ_DIV2;
-  if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
-  {
-    Error_Handler();
-  }
+	/** Initializes the CPU, AHB and APB buses clocks
+	 */
+	RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI;
+	RCC_OscInitStruct.HSIState = RCC_HSI_ON;
+	RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
+	RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
+	RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSI;
+	RCC_OscInitStruct.PLL.PLLM = RCC_PLLM_DIV1;
+	RCC_OscInitStruct.PLL.PLLN = 6;
+	RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV2;
+	RCC_OscInitStruct.PLL.PLLR = RCC_PLLR_DIV2;
+	RCC_OscInitStruct.PLL.PLLQ = RCC_PLLQ_DIV2;
+	if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
+	{
+		Error_Handler();
+	}
 
-  /** Configure the SYSCLKSource, HCLK, PCLK1 and PCLK2 clocks dividers
-  */
-  RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK3|RCC_CLOCKTYPE_HCLK
-                              |RCC_CLOCKTYPE_SYSCLK|RCC_CLOCKTYPE_PCLK1
-                              |RCC_CLOCKTYPE_PCLK2;
-  RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
-  RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
-  RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV1;
-  RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;
-  RCC_ClkInitStruct.AHBCLK3Divider = RCC_SYSCLK_DIV1;
+	/** Configure the SYSCLKSource, HCLK, PCLK1 and PCLK2 clocks dividers
+	 */
+	RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK3 | RCC_CLOCKTYPE_HCLK | RCC_CLOCKTYPE_SYSCLK | RCC_CLOCKTYPE_PCLK1 | RCC_CLOCKTYPE_PCLK2;
+	RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
+	RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
+	RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV1;
+	RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;
+	RCC_ClkInitStruct.AHBCLK3Divider = RCC_SYSCLK_DIV1;
 
-  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_2) != HAL_OK)
-  {
-    Error_Handler();
-  }
+	if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_2) != HAL_OK)
+	{
+		Error_Handler();
+	}
 }
 
 /* USER CODE BEGIN 4 */
@@ -436,12 +499,12 @@ void SystemClock_Config(void)
 /* USER CODE END 4 */
 
 /**
-  * @brief  This function is executed in case of error occurrence.
-  * @retval None
-  */
+ * @brief  This function is executed in case of error occurrence.
+ * @retval None
+ */
 void Error_Handler(void)
 {
-  /* USER CODE BEGIN Error_Handler_Debug */
+	/* USER CODE BEGIN Error_Handler_Debug */
 	/* User can add his own implementation to report the HAL error return state */
 	//__disable_irq();
 	while (1)
@@ -449,7 +512,7 @@ void Error_Handler(void)
 		HAL_GPIO_TogglePin(USER_LED_GPIO_Port, USER_LED_Pin);
 		HAL_Delay(100);
 	}
-  /* USER CODE END Error_Handler_Debug */
+	/* USER CODE END Error_Handler_Debug */
 }
 #ifdef USE_FULL_ASSERT
 /**

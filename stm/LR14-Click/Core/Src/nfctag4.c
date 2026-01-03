@@ -40,6 +40,28 @@ static HAL_StatusTypeDef nfc4_PresentPassword(I2C_HandleTypeDef *hi2c)
 	// MUST be written to 0x0900 in SYSTEM address space
 	return HAL_I2C_Mem_Write(hi2c, NFC4_I2C_ADDR_SYSTEM, 0x0900, 2, pwd_payload, 17, 200);
 }
+
+static HAL_StatusTypeDef nfc4_onOff(I2C_HandleTypeDef *hi2c, uint8_t onOff)
+{
+	HAL_StatusTypeDef status = HAL_ERROR;
+
+	if (_isNtctag4)
+	{
+		uint8_t reg_val, i; //, session_status = 0;
+
+		// Configure GPO for ALL events:
+		// 0x95 = GPO_EN(1), MsgReady(1), WriteEEPROM(1), FieldChange(1)
+		reg_val = onOff;//0x95;
+		for (i = 0; i < 5; i++)
+		{
+			status = HAL_I2C_Mem_Write(hi2c, NFC4_I2C_ADDR_USER, REG_GPO_CTRL_DYN, I2C_MEMADD_SIZE_16BIT, &reg_val, 1, 100);
+			if (status == HAL_OK)
+				break;	// for
+			HAL_Delay(10);
+		}
+	}
+	return status;
+}
 /*
  HAL_StatusTypeDef nfc4_Init(I2C_HandleTypeDef *hi2c)
  {
@@ -84,6 +106,35 @@ static HAL_StatusTypeDef nfc4_PresentPassword(I2C_HandleTypeDef *hi2c)
  }
  */
 
+HAL_StatusTypeDef nfc4_On(I2C_HandleTypeDef *hi2c)
+{
+	// Configure GPO for ALL events:
+	// 0x95 = GPO_EN(1), MsgReady(1), WriteEEPROM(1), FieldChange(1)
+	return nfc4_onOff(hi2c, 0x95);
+}
+
+HAL_StatusTypeDef nfc4_Off(I2C_HandleTypeDef *hi2c)
+{
+	// Configure GPO for ALL events:
+	// 0x95 = GPO_EN(1), MsgReady(1), WriteEEPROM(1), FieldChange(1)
+	return nfc4_onOff(hi2c, 0x00);
+}
+
+HAL_StatusTypeDef nfc4_IsOn(I2C_HandleTypeDef *hi2c, uint8_t *onOff)
+{
+	HAL_StatusTypeDef status = HAL_ERROR;
+
+	if (_isNtctag4)
+	{
+		uint8_t reg_val = 0;
+		status = HAL_I2C_Mem_Read(hi2c, NFC4_I2C_ADDR_USER, REG_GPO_CTRL_DYN, I2C_MEMADD_SIZE_16BIT, &reg_val, 1, 100);
+		if (status == HAL_OK)
+			if (onOff != NULL)
+				*onOff = (reg_val & 0x80) != 0;
+	}
+	return status;
+}
+
 HAL_StatusTypeDef nfc4_Init(I2C_HandleTypeDef *hi2c)
 {
 	HAL_StatusTypeDef status;
@@ -94,20 +145,20 @@ HAL_StatusTypeDef nfc4_Init(I2C_HandleTypeDef *hi2c)
 		// 1. Wait for device to be ready
 		if ((status = HAL_I2C_IsDeviceReady(hi2c, NFC4_I2C_ADDR_USER, 10, 100)) != HAL_OK)
 			break;
-
+#if 0
 		// 2. Present Password to modify system registers
-		//if ((status = nfc4_PresentPassword(hi2c)) != HAL_OK)
-		//	break;
+		if ((status = nfc4_PresentPassword(hi2c)) != HAL_OK)
+			break;
 
 		// --- CRITICAL: Wait for the Session to stabilize ---
-		//HAL_Delay(50);
+		HAL_Delay(50);
 
 		// 3. Requires Password presentation first - toto nejde
-		/*
+
 		 reg_val = 0x01;
 		 if ((status = HAL_I2C_Mem_Write(hi2c, NFC4_I2C_ADDR_SYSTEM, 0x000D, 2, &reg_val, 1, 100)) != HAL_OK)
 		 break;
-		 */
+#endif
 
 		// 4. Enable Mailbox (Dynamic RAM)
 		// We use a small loop because the RF field might cause a NACK
@@ -134,22 +185,8 @@ HAL_StatusTypeDef nfc4_Init(I2C_HandleTypeDef *hi2c)
 		// --- MANDATORY DELAY ---
 		// The chip needs time to process the Mailbox Enable before changing GPO settings
 		HAL_Delay(20);
-
-		// 6. Configure GPO for ALL events:
-		// 0x95 = GPO_EN(1), MsgReady(1), WriteEEPROM(1), FieldChange(1)
-		reg_val = 0x95;
-		for (i = 0; i < 5; i++)
-		{
-			status = HAL_I2C_Mem_Write(hi2c, NFC4_I2C_ADDR_USER, REG_GPO_CTRL_DYN, I2C_MEMADD_SIZE_16BIT, &reg_val, 1, 100);
-			if (status == HAL_OK)
-				break;	// for
-			HAL_Delay(10);
-		}
-		if (status != HAL_OK)
-			break;
-
-		status = HAL_OK;
 		_isNtctag4 = 1;
+		nfc4_Off(hi2c);
 	} while (0);
 	return status;
 }

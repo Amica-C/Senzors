@@ -3,9 +3,18 @@
  *
  *  Created on: 27. 12. 2025
  *      Author: Milan
+ *
+ *  NFC 4 tag click,  ST25R3916.pdf  https://download.mikroe.com/documents/datasheets/ST25R3916%20Datasheet.pdf
+ *  nfc - zapis a citanie cez EEPROM, cez mail box to nejde, takze zatial nema vyznam aktivovat cez INT, aby nesla zbytocne spotreba
+ *  heslo ako default je 8x 0h
+ *
  *  EEPROM funguje....
+ *
+ *
  *  ale nefunguje MailBox - neviem citat a zapisovat do MailBoxu.
- *  Skusal som to cez CHAPGPT aj GENIMI, ale nepodarilo sa mi preniest data, takze to asi nema vyznam. RF je aj tak statice, tak sa to moze vyjebat...
+ *  Skusal som to cez CHAPGPT aj GENIMI, ale nepodarilo sa mi preniest data, takze to asi nema vyznam. RF je aj tak staticke
+ *
+ *  Nie je to este celkom jasnr=e, ako to bude bavit
  *
  */
 
@@ -41,6 +50,23 @@ HAL_StatusTypeDef nfc4_WriteEEPROM(I2C_HandleTypeDef *hi2c, uint16_t addr, uint8
  * @brief Citanie z EEPPROM
  */
 HAL_StatusTypeDef nfc4_ReadEEPROM(I2C_HandleTypeDef *hi2c, uint16_t addr, uint8_t *pData, uint16_t len);
+
+/**
+ * @brief ziskanie stavu
+ */
+HAL_StatusTypeDef nfc4_IsOn(I2C_HandleTypeDef *hi2c, uint8_t *onOff);
+
+/**
+ * @brief Zapnutie sensora pre posielanie INT, ze NFC sa aktivoval. Stupa spotreba. Nie je to nutne, aj tak sa cita cez EEPROM
+ * Nevidim dovod, naco by to malo zmysel
+ */
+HAL_StatusTypeDef nfc4_On(I2C_HandleTypeDef *hi2c);
+
+/**
+ * @brief vypnutie GPO_EN
+ */
+HAL_StatusTypeDef nfc4_Off(I2C_HandleTypeDef *hi2c);
+
 
 /*
  * MailBox Nejde.... tak na tieto dalsie jebem z vysoka....

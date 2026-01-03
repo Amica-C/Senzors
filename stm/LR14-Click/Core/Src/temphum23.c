@@ -1,5 +1,8 @@
 /*
  * MT 22.12.2025
+ *
+ * Temp&hum 23 click  SHT45.pdf   https://download.mikroe.com/documents/datasheets/SHT45-AD1B-R2_datasheet.pdf
+ *
  * Mohol som zobrat kniznicu priamo z https://github.com/MikroElektronika/mikrosdk_click_v2/blob/master/clicks/temphum23/lib_temphum23/src/temphum23.c
  * ale je tam problem ze musim dotiahnut dalsie moduly.
  * Preto sa pojde cestou priameho citania z I2C
@@ -12,8 +15,18 @@
 
 static uint16_t _tempHumAddr = 0;// - musi sa cez init 0x44; // pripadne 0x45
 static int8_t _isTempHumSenzor = 0;
+static int8_t _isOnOff = 0; 	// dummy
 
 tempHum_t _tempHumData = { };
+
+static HAL_StatusTypeDef tempHum_onOff(I2C_HandleTypeDef *hi2c, uint8_t onOff)
+{
+	HAL_StatusTypeDef status = _isTempHumSenzor ? HAL_OK : HAL_ERROR;
+
+	if (status == HAL_OK)
+		_isOnOff = onOff;
+	return status;
+}
 
 int8_t tempHum_Is(I2C_HandleTypeDef *hi2c, int8_t tryInit)//
 {
@@ -21,6 +34,27 @@ int8_t tempHum_Is(I2C_HandleTypeDef *hi2c, int8_t tryInit)//
 		tempHum_Init(hi2c);
 	return _isTempHumSenzor;
 }
+
+HAL_StatusTypeDef tempHum_IsOn(I2C_HandleTypeDef *hi2c, uint8_t *onOff)
+{
+	HAL_StatusTypeDef status = _isTempHumSenzor ? HAL_OK : HAL_ERROR;
+
+	if (status == HAL_OK)
+		if (onOff != NULL)
+			*onOff = _isOnOff;
+	return status;
+}
+
+HAL_StatusTypeDef tempHum_On(I2C_HandleTypeDef *hi2c)
+{
+	return tempHum_onOff(hi2c, 1);
+}
+
+HAL_StatusTypeDef tempHum_Off(I2C_HandleTypeDef *hi2c)
+{
+	return tempHum_onOff(hi2c, 0);
+}
+
 
 HAL_StatusTypeDef tempHum_Init(I2C_HandleTypeDef *hi2c) //
 {
@@ -30,13 +64,8 @@ HAL_StatusTypeDef tempHum_Init(I2C_HandleTypeDef *hi2c) //
 	{
 		status = HAL_I2C_IsDeviceReady(hi2c, _tempHumAddr << 1, 2, 2);	// prva kontrola
 		_isTempHumSenzor = (status == HAL_OK);
-		if (_isTempHumSenzor) //
-		{
-			// este kontrola, ci naozaj su tam data, co chcem
-			if (tempHum_Read(hi2c) == HAL_OK)
-				break;
-			_isTempHumSenzor = 0;	// daco je na adrese, ale nie je to tempHum senzor
-		}
+		if (_isTempHumSenzor)
+			break;
 	}
 	return status;
 }
@@ -66,6 +95,11 @@ HAL_StatusTypeDef tempHum_Read(I2C_HandleTypeDef *hi2c) //
 	if (_isTempHumSenzor) //
 		do //
 		{
+			if (!_isOnOff)
+			{
+				ret = HAL_TIMEOUT;
+				break;
+			}
 			// 1. Send Command (Address 0x44 << 1 = 0x88)
 			ret = HAL_I2C_Master_Transmit(hi2c, (_tempHumAddr << 1), &cmd, 1, 100);
 			if (ret != HAL_OK)
@@ -75,7 +109,7 @@ HAL_StatusTypeDef tempHum_Read(I2C_HandleTypeDef *hi2c) //
 			HAL_Delay(10);
 
 			// 3. Read 6 bytes of data
-			ret = HAL_I2C_Master_Receive(hi2c, 0x88, buffer, 6, 100);
+			ret = HAL_I2C_Master_Receive(hi2c, (_tempHumAddr << 1), buffer, 6, 100);
 			if (ret != HAL_OK)
 				break;
 

@@ -6,6 +6,8 @@
  *      Author: Milan
  *
  * Module zabezpecuje zapis bez ohladu na 256bytes bondary
+ * Flash sa aktivuje cez CS na GND. Spotreba je 2mA
+ * StandBy mode je CS na VCC, spotreba 14mcA
  */
 
 #ifndef INC_FLASH12_H_

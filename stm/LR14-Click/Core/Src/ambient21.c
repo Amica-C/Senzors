@@ -22,7 +22,7 @@ typedef enum
 // Global or static variable to track state
 static TSL2591_Gain_t _currentGain = TSL2591_GAIN_MED;
 
-static int8_t _isAmbientSenzor = 0;	// indikator, ci je senzor aktivny
+static int8_t _isAmbientSenzor = 0;	// indikator, ci je senzor
 
 int8_t ambient_Is(I2C_HandleTypeDef *hi2c, int8_t tryInit) //
 {
@@ -31,13 +31,27 @@ int8_t ambient_Is(I2C_HandleTypeDef *hi2c, int8_t tryInit) //
 	return _isAmbientSenzor;
 }
 
-HAL_StatusTypeDef ambient_Init(I2C_HandleTypeDef *hi2c)
+HAL_StatusTypeDef ambient_IsOn(I2C_HandleTypeDef *hi2c, uint8_t *onOff)
 {
-	HAL_StatusTypeDef status;
+	uint8_t data = 0;
+	HAL_StatusTypeDef status = HAL_ERROR;
+
+	if (_isAmbientSenzor)
+	{
+		status = HAL_I2C_Mem_Read(hi2c, AMBIENT_ADDR, TSL2591_COMMAND | REG_ENABLE, I2C_MEMADD_SIZE_8BIT, &data, 1, 100);
+		if (status == HAL_OK)
+			if (onOff != NULL)
+				*onOff = data & 1; //(bit0 - powerOnOff);
+	}
+	return status;
+}
+
+HAL_StatusTypeDef ambient_On(I2C_HandleTypeDef *hi2c)
+{
+	HAL_StatusTypeDef status = HAL_ERROR;
 	uint8_t data;
 
-	status = HAL_I2C_IsDeviceReady(hi2c, AMBIENT_ADDR, 2, 2);	// prva kontrola
-	if (status == HAL_OK)
+	if (_isAmbientSenzor)
 		do
 		{
 			// 1. Power on the sensor (Enable register)
@@ -60,23 +74,62 @@ HAL_StatusTypeDef ambient_Init(I2C_HandleTypeDef *hi2c)
 			if (status != HAL_OK)
 				break;
 			status = HAL_OK;
+			if (_isAmbientSenzor)
+			{
+				for (data = 0; data < 4; data++)
+					if (ambient_ReadLux(hi2c, NULL) == HAL_OK)
+						break;	// kalibracia...., ak mam hodnotu, mozem koncit
+			}
 		} while (0);
 
-	_isAmbientSenzor = (status == HAL_OK);
+	return status;
+}
+
+HAL_StatusTypeDef ambient_Off(I2C_HandleTypeDef *hi2c)
+{
+	HAL_StatusTypeDef status = HAL_ERROR;
+	uint8_t data;
+
 	if (_isAmbientSenzor)
-	{
-		for (int i = 0; i < 4; i++)
-			ambient_ReadLux(hi2c, NULL);	// predcitanie....
-	}
+		do
+		{
+			// 1. Power on the sensor (Enable register)
+			// AIEN (Bit 4) = 0 (Interrupts off for now)
+			// AEN  (Bit 1) = 0 (ALS Enable)
+			// PON  (Bit 0) = 0 (Power ON)
+			data = 0x00;
+			status = HAL_I2C_Mem_Write(hi2c, AMBIENT_ADDR, TSL2591_COMMAND | REG_ENABLE, I2C_MEMADD_SIZE_8BIT, &data, 1, 100);
+			if (status != HAL_OK)
+				break;
+		} while (0);
+	return status;
+}
+
+HAL_StatusTypeDef ambient_Init(I2C_HandleTypeDef *hi2c)
+{
+	HAL_StatusTypeDef status = HAL_I2C_IsDeviceReady(hi2c, AMBIENT_ADDR, 2, 2);	// prva kontrola
+	if (status == HAL_OK)
+		do
+		{
+			_isAmbientSenzor = 1;
+			// 1. zapne senzor a skalibruje
+			if ((status = ambient_On(hi2c)) != HAL_OK)
+				break;
+			// 2. vypnutie senzora
+			if ((status = ambient_Off(hi2c)) != HAL_OK)
+				break;
+		} while (0);
+	_isAmbientSenzor = (status == HAL_OK);
 	return status;
 }
 
 /**
  * @brief This function checks the raw channel 0 value. If it is near the 16-bit limit (65535), it drops the gain. If it is too low, it boosts it.
  */
-HAL_StatusTypeDef ambient_AdjustGain(I2C_HandleTypeDef *hi2c, uint16_t rawCH0)
+static HAL_StatusTypeDef ambient_AdjustGain(I2C_HandleTypeDef *hi2c, uint16_t rawCH0)
 {
 	TSL2591_Gain_t newGain = _currentGain;
+	HAL_StatusTypeDef status = HAL_OK;
 
 	// Thresholds: ~90% of max for "too bright", ~1% for "too dark"
 	if (rawCH0 > THRESH_MAX) // 60000) //
@@ -102,10 +155,9 @@ HAL_StatusTypeDef ambient_AdjustGain(I2C_HandleTypeDef *hi2c, uint16_t rawCH0)
 	{
 		_currentGain = newGain;
 		uint8_t regVal = _currentGain | 0x01; // 0x01 is 100ms integration time
-		return HAL_I2C_Mem_Write(hi2c, AMBIENT_ADDR,
-		TSL2591_COMMAND | REG_CONFIG, I2C_MEMADD_SIZE_8BIT, &regVal, 1, 100);
+		status = HAL_I2C_Mem_Write(hi2c, AMBIENT_ADDR, TSL2591_COMMAND | REG_CONFIG, I2C_MEMADD_SIZE_8BIT, &regVal, 1, 100);
 	}
-	return HAL_OK;
+	return status;
 }
 
 /**
@@ -114,177 +166,70 @@ HAL_StatusTypeDef ambient_AdjustGain(I2C_HandleTypeDef *hi2c, uint16_t rawCH0)
 HAL_StatusTypeDef ambient_ReadLux(I2C_HandleTypeDef *hi2c, float *luxOut) //
 {
 	uint8_t buffer[4];
-	HAL_StatusTypeDef ret = HAL_ERROR;
+	HAL_StatusTypeDef status = HAL_ERROR;
 
 	if (_isAmbientSenzor) //
 	{
-		// Read raw values
-		ret = HAL_I2C_Mem_Read(hi2c, AMBIENT_ADDR,
-		TSL2591_COMMAND | REG_C0DATAL, I2C_MEMADD_SIZE_8BIT, buffer, 4, 100);
-
-		uint16_t ch0 = (buffer[1] << 8) | buffer[0];
-		uint16_t ch1 = (buffer[3] << 8) | buffer[2];
-
-		// 1. Update gain for the NEXT reading
-		ambient_AdjustGain(hi2c, ch0);
-
-		// 2. Map current gain enum to actual multiplier for math
-		float multiplier;
-		switch (_currentGain)
-		//
+		do
 		{
-			case TSL2591_GAIN_LOW:
-				multiplier = 1.0f;
-			break;
-			case TSL2591_GAIN_MED:
-				multiplier = 25.0f;
-			break;
-			case TSL2591_GAIN_HIGH:
-				multiplier = 428.0f;
-			break;
-			case TSL2591_GAIN_MAX:
-				multiplier = 9876.0f;
-			break;
-			default:
-				multiplier = 1.0f;
-		}
+			uint8_t onOff = 0;
+			// 1.check, sensor is on
+			if ((status = ambient_IsOn(hi2c, &onOff)) != HAL_OK)
+				break;
 
-		// 3. Calculate Lux
-		float atime = 100.0f;
-		float cpl = (atime * multiplier) / 408.0f;
-		float lux = ((float) ch0 - (2.0f * (float) ch1)) / cpl;
-		if (luxOut != NULL)
-		{
-			*luxOut = lux;
-		}
-		if (ch0 < THRESH_MIN || ch0 > THRESH_MAX)
-			ret = HAL_BUSY;
+			if (!onOff)
+			{
+				status = HAL_TIMEOUT;
+				break;
+			}
+
+			// Read raw values
+			if ((status = HAL_I2C_Mem_Read(hi2c, AMBIENT_ADDR, TSL2591_COMMAND | REG_C0DATAL, I2C_MEMADD_SIZE_8BIT, buffer, 4, 100)) != HAL_OK)
+				break;
+
+			uint16_t ch0 = (buffer[1] << 8) | buffer[0];
+			uint16_t ch1 = (buffer[3] << 8) | buffer[2];
+
+			// 1. Update gain for the NEXT reading
+			ambient_AdjustGain(hi2c, ch0);
+
+			// 2. Map current gain enum to actual multiplier for math
+			float multiplier;
+			switch (_currentGain)
+			//
+			{
+				case TSL2591_GAIN_LOW:
+					multiplier = 1.0f;
+				break;
+				case TSL2591_GAIN_MED:
+					multiplier = 25.0f;
+				break;
+				case TSL2591_GAIN_HIGH:
+					multiplier = 428.0f;
+				break;
+				case TSL2591_GAIN_MAX:
+					multiplier = 9876.0f;
+				break;
+				default:
+					multiplier = 1.0f;
+			}
+
+			// 3. Calculate Lux
+			float atime = 100.0f;
+			float cpl = (atime * multiplier) / 408.0f;
+			float lux = ((float) ch0 - (2.0f * (float) ch1)) / cpl;
+			if (luxOut != NULL)
+			{
+				*luxOut = lux;
+			}
+			if (ch0 < THRESH_MIN || ch0 > THRESH_MAX)
+			{
+				status = HAL_BUSY;
+				break;
+			}
+			status = HAL_OK;
+		} while (0);
 	}
-	return ret;
+	return status;
 }
 
-#if 0
-
-// Integration Time Options (Bits 7:6)
-#define VCNL4040_ALS_IT_80MS  (0x00 << 6)	// 00
-#define VCNL4040_ALS_IT_160MS (0x01 << 6)	// 40
-#define VCNL4040_ALS_IT_320MS (0x02 << 6)	// 80
-#define VCNL4040_ALS_IT_640MS (0x03 << 6)	// C0
-
-// Shutdown Bit (Bit 0)
-#define VCNL4040_ALS_POWER_ON (0 << 0)
-
-// Standard Setting: 80ms Integration, Power On, No Interrupts
-#define ALS_CONF_SETTINGS (VCNL4040_ALS_IT_80MS | VCNL4040_ALS_POWER_ON)
-
-
-#define VCNL4040_ADDR (0x60 << 1)
-#define ALS_CONF_REG  0x00
-#define ALS_DATA_REG  0x08
-
-static int8_t _isAmbientSenzor = 0;	// indikator, ci je senzor aktivny
-
-
-// auto kalibracia
-typedef enum //
-{
-    IT_080MS = 0,
-    IT_160MS,
-    IT_320MS,
-    IT_640MS
-} VCNL_IT_t;
-
-static VCNL_IT_t _currentIT = IT_080MS;
-
-// Integration Time command bits for the register
-const uint16_t IT_COMMANDS[] = {VCNL4040_ALS_IT_80MS, VCNL4040_ALS_IT_160MS, VCNL4040_ALS_IT_320MS, VCNL4040_ALS_IT_640MS};
-// Corresponding multipliers for Lux calculation
-const float IT_MULTIPLIERS[] = {0.1000f, 0.0500f, 0.0250f, 0.0125f};
-
-int8_t ambient_Is() //
-{
-	return _isAmbientSenzor;
-}
-
-/**
- * @brief Zakladna konfiguracia senzora
- */
-HAL_StatusTypeDef ambient_Config(I2C_HandleTypeDef *hi2c) //
-{
-	HAL_StatusTypeDef status;
-
-	uint8_t pkt[3];
-	uint16_t config = IT_COMMANDS[_currentIT]; // Power stays ON (bit 0 = 0)
-
-	pkt[0] = ALS_CONF_REG; // ALS_CONF
-	pkt[1] = (uint8_t)(config & 0xFF);
-	pkt[2] = (uint8_t)((config >> 8) & 0xFF);
-    status = HAL_I2C_Master_Transmit(hi2c, VCNL4040_ADDR, pkt, 3, 100);
-
-    return status;
-}
-
-
-
-/**
- * @brief Initializes the Ambient 21 Click
- */
-HAL_StatusTypeDef ambient_Init(I2C_HandleTypeDef *hi2c) //
-{
-	HAL_StatusTypeDef status = ambient_Config(hi2c);
-
-    if (status == HAL_OK)
-    {
-    	for (int i = IT_080MS; i <= IT_640MS && status == HAL_OK; i++)
-    		status = ambient_ReadLux(hi2c, NULL);	// musim sa nastavit, tak aby som mal dobre svetlo
-    }
-    _isAmbientSenzor = (status == HAL_OK);
-    return status;
-}
-
-/**
- * @brief Reads the Ambient Light level and converts to LUX
- */
-HAL_StatusTypeDef ambient_ReadLux(I2C_HandleTypeDef *hi2c, float *luxOut) //
-{
-    uint8_t reg = ALS_DATA_REG; // ALS_Data register
-    uint8_t data[2];
-    HAL_StatusTypeDef ret = HAL_ERROR;
-
-    if (_isAmbientSenzor) //
-    	do //
-    	{
-    		// 1. Read Raw Data
-    		ret = HAL_I2C_Master_Transmit(hi2c, VCNL4040_ADDR, &reg, 1, 100);
-    		if (ret != HAL_OK) break;
-
-    		ret = HAL_I2C_Master_Receive(hi2c, VCNL4040_ADDR, data, 2, 100);
-    		if (ret != HAL_OK) break;
-
-    		uint16_t raw_counts = (data[1] << 8) | data[0];
-    	    // 2. Calculate Lux based on current setting
-    		if (luxOut != NULL)
-    			*luxOut = (float)raw_counts * IT_MULTIPLIERS[_currentIT];
-
-    	    // 3. Check for Auto-Range adjustment
-    	    // If raw counts are too high (> 90% of 16-bit range) and we aren't at the fastest IT
-    	    if (raw_counts > 60000 && _currentIT > IT_080MS) //
-    	    {
-    	        _currentIT--; // Decrease IT to handle more light
-    	        ambient_Config(hi2c);
-    	    }
-    	    // If raw counts are too low (< 10% of 16-bit range) and we aren't at the max IT
-    	    else //
-    	    {
-    	    	if (raw_counts < 5000 && _currentIT < IT_640MS) //
-    	    	{
-    	    		_currentIT++; // Increase IT for better dark sensitivity
-    	    		ambient_Config(hi2c);
-    	    	}
-    	    }
-    	    ret = HAL_OK;
-    	} while(0);
-    return ret;
-}
-
-#endif
