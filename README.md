@@ -3,12 +3,14 @@ Ako základ je použitý RAK 3172 založený na CPU STM32WLE5CC.
 <br>
 Na všetkých sezoroch a moduloch som musel odpájkovať odpory na SDA/SCL výstupoch - pullup na 3.3V
 <br>
-Samotný RAK má tiež tieto odpory, 10kOhm, to som tam nechal, ale aby som dostal na zbernicu SDA/SCL 5kOhm, musel som dodatočne pridať ďal paralerne odpory 10kOhm a tak mi to spadlo na požadovaných 5kOhm
+Samotný RAK má tiež tieto odpory, 10kOhm, to som tam nechal, ale aby som dostal na zbernicu SDA/SCL 5kOhm, musel som dodatočne pridať paralerne odpory 10kOhm a tak mi to spadlo na požadovaných 5kOhm
 
 ## RAK3172: 
 - https://www.mikroe.com/lr-14-click
 - datasheet RAK: [RAK 3172 datasheet](datasheets/RAK3172_datasheet.pdf)
 - datasheet STM32WLEx: [STM32WLEx](datasheets/rm0461-stm32wlex-RAK.pdf)
+- shcema v100 [lr-14-click-schematic](datasheets/lr-14-click-schematic.pdf)
+- Tento modul obsahuje schottky diódu a tak napätie cez VBUS/VBAT je 3V a nie 3.3V, senzor SCD41(CO2) má problém nažhaviť laser
 
 ## podporovane senzory
 Temp&Hum 23 Click, SHT4x (I2C)
@@ -22,6 +24,15 @@ Ambient 21 Click, TSL2591 (I2C)
 Barometer 8 click, ILPS22QS (I2C)
 - https://www.mikroe.com/barometer-8-click
 - https://download.mikroe.com/documents/datasheets/ILPS22QS_datasheet.pdf
+
+NVAC Click SCD41 senzor CO2, teploty a vlhkosti
+- https: https://www.mikroe.com/hvac-click
+- datasheet SCD41 [SCD41Datasheet](datasheets/SCD41Datasheet.pdf)
+- požadované napätie 3.3V, spotreba 0.2A pri žhavení
+
+NVAC Click SPS30 senzor pevných častí
+- napätie 5V - TTL, SDA/SCA 3.3V LVTTL
+- datasheet SPS30 [SPS30Datasheet.pdf](datasheets/SPS30Datasheet.pdf)
 
 
 ## Moduly
