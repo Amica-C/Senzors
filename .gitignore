@@ -56,3 +56,4 @@ dkms.conf
 *.dwo
 
 /stm/LR14-Click/Debug/*
+/stm/LR14-Click/Release/*

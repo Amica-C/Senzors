@@ -16,7 +16,6 @@
 #define AT25_MANUFACTURER_ID 0x1F
 #define AT25_DEVICE_ID_BYTE1 0x10 // 4Mbit density
 
-
 void flash_Select(const flashCS_t* s)
 {
 	HAL_GPIO_WritePin(s->csPort, s->csPin, GPIO_PIN_RESET);

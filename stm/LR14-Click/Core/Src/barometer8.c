@@ -19,7 +19,8 @@
 // Device ID
 #define ILPS22QS_ID          0xB4
 
-static int8_t _isBarometer = 0;
+barometer_t _tempBarometerData = { };
+static uint8_t _isBarometer = 0;
 
 static HAL_StatusTypeDef barometer_onOff(I2C_HandleTypeDef *hi2c, uint8_t onOff)
 {
@@ -101,7 +102,7 @@ HAL_StatusTypeDef barometer_Init(I2C_HandleTypeDef *hi2c)
 	return status;
 }
 
-HAL_StatusTypeDef barometer_Read(I2C_HandleTypeDef *hi2c, float *pressure, float *temperature)
+HAL_StatusTypeDef barometer_Read(I2C_HandleTypeDef *hi2c)
 {
 	uint8_t raw_data[5]; // 3 bytes for pressure, 2 for temperature
 	HAL_StatusTypeDef status = HAL_ERROR;
@@ -130,15 +131,11 @@ HAL_StatusTypeDef barometer_Read(I2C_HandleTypeDef *hi2c, float *pressure, float
 			if (raw_press & 0x800000)
 				raw_press |= 0xFF000000;
 
-			if (pressure != NULL)
-				*pressure = (float) raw_press / 4096.0f;
+			_tempBarometerData.pressure = (float) raw_press / 4096.0f;
 
 			// Process Temperature (16-bit signed)
-			if (temperature != NULL)
-			{
-				int16_t raw_temp = (int16_t) ((uint16_t) raw_data[4] << 8 | raw_data[3]);
-				*temperature = (float) raw_temp / 100.0f;
-			}
+			int16_t raw_temp = (int16_t) ((uint16_t) raw_data[4] << 8 | raw_data[3]);
+			_tempBarometerData.temperature = (float) raw_temp / 100.0f;
 		} while (0);
 	}
 	return status;

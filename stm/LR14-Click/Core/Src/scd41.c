@@ -28,7 +28,9 @@
 
 
 // default nastavenie
-scd41_t _scd41Data = { .altitude = -1, .co2 = -1, .humidity = -1.0f, .temperature = -1000.0f, .is = 0 };
+scd41_t _scd41Data = { .altitude = -1, .co2 = -1, .humidity = -1.0f, .temperature = -1000.0f};
+
+static int8_t _isScd41 = 0;
 
 // Internal Helper: CRC-8 Calculation
 static uint8_t hvac_CalculateCRC(uint8_t *data, uint8_t len)
@@ -78,9 +80,9 @@ static HAL_StatusTypeDef scd41_onOff(I2C_HandleTypeDef *hi2c, uint16_t onOff)
 
 int8_t scd41_Is(I2C_HandleTypeDef *hi2c, int8_t tryInit)
 {
-	if (!_scd41Data.is && tryInit)
+	if (!_isScd41 && tryInit)
 		scd41_Init(hi2c);
-	return _scd41Data.is;
+	return _isScd41;
 }
 
 HAL_StatusTypeDef scd41_On(I2C_HandleTypeDef *hi2c)
@@ -127,7 +129,7 @@ HAL_StatusTypeDef scd41_Init(I2C_HandleTypeDef *hi2c)
 			//	break;
 			//if ((ret = scd41_Start(hi2c)) != HAL_OK)
 			//	break;
-			_scd41Data.is = 1;
+			_isScd41 = 1;
 
 		} while (0);
 	}
@@ -142,7 +144,7 @@ HAL_StatusTypeDef scd41_IsDataReady(I2C_HandleTypeDef *hi2c)
 {
 	HAL_StatusTypeDef status = HAL_ERROR;
 
-	if (_scd41Data.is)
+	if (_isScd41)
 	{
 		uint8_t cmd[2] = { (SCD41_CMD_GET_DATA_READY >> 8), (SCD41_CMD_GET_DATA_READY & 0xFF) };
 		uint8_t buf[3] = { };

@@ -18,6 +18,17 @@
 
 #include "stm32wlxx_hal.h" // Change to your specific family (e.g., l4xx, g0xx)
 
+typedef struct //
+{
+    float pressure;
+    float temperature;
+} barometer_t;
+
+/**
+ * @brief data(struktura) kde je ulozena hodnota tlaku a vlhkosti
+ */
+extern barometer_t _tempBarometerData;
+
 /**
  * @brief - kontrola, ci je pritomny svetelny senzor
  * @param tryInit - v pripade, ak nie je senzor este inicialozovany, 1 - pokus o znova inicializovanie, 0 - nie
@@ -59,6 +70,6 @@ HAL_StatusTypeDef barometer_Off(I2C_HandleTypeDef *hi2c);
  * 	HAL_TIMEOUT - senzor nie je zapnuty
  * 	HAL_ERROR - chyba
  */
-HAL_StatusTypeDef barometer_Read(I2C_HandleTypeDef *hi2c, float *pressure, float *temperature);
+HAL_StatusTypeDef barometer_Read(I2C_HandleTypeDef *hi2c);
 
 #endif /* INC_BAROMETER8_H_ */

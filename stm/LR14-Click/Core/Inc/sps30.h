@@ -70,7 +70,6 @@ typedef struct
 	float num_pm4_0;
 	float num_pm10_0;
 	float typical_particle_size;
-	uint8_t is;	// je/nie je senzor
 } sps30_t;
 
 // Air Quality Index (AQI) standards. For PM2.5 -> μg/m3 value to the standard EPA/WHO

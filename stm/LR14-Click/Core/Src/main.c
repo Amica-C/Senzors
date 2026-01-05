@@ -58,7 +58,7 @@
 
 /* USER CODE BEGIN PV */
 sleeper_t _readData = { };	// casovac citanie dat zo senzorov
-sleeper_t _sensorsOnOff = {};// casovac zapinania,vypinania senzorov
+sleeper_t _sensorsOnOff = { };	// casovac zapinania,vypinania senzorov
 uint8_t _isSensorOn = 0;	// indikator, ci senzory idu alebo nie
 flashCS_t _flash = { .csPort = SPI1_CS_GPIO_Port, .csPin = SPI1_CS_Pin, .spi = &hspi1, .is = 0 };
 
@@ -229,7 +229,7 @@ int main(void)
 
 	// pripadne cistanie ser-portu
 	writeLog("start UUART read");
-	status = Uart_StartReceving(&huart2);
+	status = Uart_StartReceving(&huart1);
 	writeLog("UART read: %d", (int) status);
 	//I2C_Scan(&hi2c2);
 
@@ -294,13 +294,13 @@ int main(void)
 	/* Infinite loop */
 	/* USER CODE BEGIN WHILE */
 	/*
-	tempHum_On(&hi2c2);
-	ambient_On(&hi2c2);
-	barometer_On(&hi2c2);
-	nfc4_On(&hi2c2);
-	scd41_On(&hi2c2);
-	sps30_On(&hi2c2);
-	*/
+	 tempHum_On(&hi2c2);
+	 ambient_On(&hi2c2);
+	 barometer_On(&hi2c2);
+	 nfc4_On(&hi2c2);
+	 scd41_On(&hi2c2);
+	 sps30_On(&hi2c2);
+	 */
 	sensorsOnOff(0);	// pri starte vsetko ok
 	while (1) //
 	{
@@ -354,13 +354,11 @@ int main(void)
 
 			if (barometer_Is(&hi2c2, _tryInit))
 			{
-				float pressure = 0, temp = 0;
-
-				status = barometer_Read(&hi2c2, &pressure, &temp);
+				status = barometer_Read(&hi2c2);
 				if (status == HAL_OK)
 				{
 					//writeLog("pressure:%d, temp:%d", (int) (pressure * 100.0f), (int) (temp * 100.0f));
-					sensBuffer_Add("pressure:%d, temp:%d ", (int) (pressure * 100.0f), (int) (temp * 100.0f));
+					sensBuffer_Add("pressure:%d, temp:%d ", (int) (_tempBarometerData.pressure * 100.0f), (int) (_tempBarometerData.temperature * 100.0f));
 				}
 				else
 				{

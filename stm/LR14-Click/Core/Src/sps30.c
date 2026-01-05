@@ -22,6 +22,7 @@
 #define SPS30_CMD_CLEAN_INTERVAL  0x8004
 
 sps30_t _sps30Data = { };
+static int8_t _isSps30 = 0;
 
 // Internal helper for Sensirion CRC8
 static uint8_t sps30_CalculateCrc(uint8_t data[], uint8_t len)
@@ -79,9 +80,9 @@ AQI_Level_t sps30_ClassifyPM25(char **label)
 
 int8_t sps30_Is(I2C_HandleTypeDef *hi2c, int8_t tryInit) //
 {
-	if (!_sps30Data.is && tryInit)
+	if (!_isSps30 && tryInit)
 		sps30_Init(hi2c);
-	return _sps30Data.is;
+	return _isSps30;
 }
 
 HAL_StatusTypeDef sps30_Init(I2C_HandleTypeDef *hi2c)
@@ -114,7 +115,7 @@ HAL_StatusTypeDef sps30_Init(I2C_HandleTypeDef *hi2c)
 			if ((status = HAL_I2C_Master_Transmit(hi2c, SPS30_I2C_ADDR, cmd, 2, 100)) != HAL_OK)
 				break;
 			HAL_Delay(10); // min 5ms
-			_sps30Data.is = 1;
+			_isSps30 = 1;
 		} while (0);
 	}
 	return status;
@@ -124,7 +125,7 @@ HAL_StatusTypeDef sps30_On(I2C_HandleTypeDef *hi2c)
 {
 	HAL_StatusTypeDef status = HAL_ERROR;
 
-	if (_sps30Data.is)
+	if (_isSps30)
 	{
 		uint8_t cmd[5] = { };
 
@@ -157,7 +158,7 @@ HAL_StatusTypeDef sps30_Off(I2C_HandleTypeDef *hi2c)
 {
 	HAL_StatusTypeDef status = HAL_ERROR;
 
-	if (_sps30Data.is)
+	if (_isSps30)
 	{
 		uint8_t cmd[2] = { (SPS30_CMD_STOP_MEAS >> 8), (SPS30_CMD_STOP_MEAS & 0xFF) };
 
@@ -182,7 +183,7 @@ HAL_StatusTypeDef sps30_IsDataReady(I2C_HandleTypeDef *hi2c)
 {
 	HAL_StatusTypeDef status = HAL_ERROR;
 
-	if (_sps30Data.is)
+	if (_isSps30)
 	{
 		uint8_t cmd[2] = { (SPS30_CMD_READ_DRDY >> 8), (SPS30_CMD_READ_DRDY & 0xFF) };
 		uint8_t data[3]; // 2 bytes data + 1 byte CRC
@@ -267,7 +268,7 @@ HAL_StatusTypeDef sps30_GetAutoCleanInterval(I2C_HandleTypeDef *hi2c, uint32_t *
 {
 	HAL_StatusTypeDef status = HAL_ERROR;
 
-	if (_sps30Data.is)
+	if (_isSps30)
 	{
 		uint8_t cmd[2] = { (SPS30_CMD_CLEAN_INTERVAL >> 8), (SPS30_CMD_CLEAN_INTERVAL & 0xFF) };
 		uint8_t buffer[6]; // 2 words (4 bytes) + 2 CRC bytes
@@ -295,7 +296,7 @@ HAL_StatusTypeDef sps30_SetAutoCleanInterval(I2C_HandleTypeDef *hi2c, uint32_t i
 {
 	HAL_StatusTypeDef status = HAL_ERROR;
 
-	if (_sps30Data.is)
+	if (_isSps30)
 	{
 		uint8_t cmd[8];
 		do
