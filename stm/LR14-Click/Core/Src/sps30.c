@@ -4,7 +4,7 @@
  *  Created on: 2. 1. 2026
  *      Author: Milan
  */
-
+#include "mysensors.h"
 #include "sps30.h"
 #include <string.h>
 
@@ -96,7 +96,7 @@ HAL_StatusTypeDef sps30_Init(I2C_HandleTypeDef *hi2c)
 	status = HAL_I2C_Master_Transmit(hi2c, SPS30_I2C_ADDR, cmd, 2, 100);
 	HAL_Delay(10); // Minimum 5ms delay required after wakeup
 
-	status = HAL_I2C_IsDeviceReady(hi2c, SPS30_I2C_ADDR, 2, 2);	// prva kontrola
+	status = MY_I2C_IsDeviceReady(hi2c, SPS30_I2C_ADDR, 2, 2);	// prva kontrola
 
 	if (status == HAL_OK)
 	{
@@ -128,13 +128,17 @@ HAL_StatusTypeDef sps30_On(I2C_HandleTypeDef *hi2c)
 	if (_isSps30)
 	{
 		uint8_t cmd[5] = { };
+		int wakeUp = 2; // 2x wake up i2c
 
 		do
 		{
-			// 1. Wake up the sensor
+			// 1. Wake up the sensor 2x
 			cmd[0] = (SPS30_CMD_WAKEUP >> 8);
 			cmd[1] = (SPS30_CMD_WAKEUP & 0xFF);
-			if ((status = HAL_I2C_Master_Transmit(hi2c, SPS30_I2C_ADDR, cmd, 2, 100)) != HAL_OK)
+			while (wakeUp-- > 0 && (status = HAL_I2C_Master_Transmit(hi2c, SPS30_I2C_ADDR, cmd, 2, 100)) != HAL_OK)
+				HAL_Delay(20);	// delay
+
+			if (status != HAL_OK)
 				break;
 			HAL_Delay(10); // Minimum 5ms delay required after wakeup
 
@@ -150,6 +154,7 @@ HAL_StatusTypeDef sps30_On(I2C_HandleTypeDef *hi2c)
 			HAL_Delay(25); // min 20
 			// Note: It takes about 1 second for the first measurement to be ready
 		} while (0);
+		_isSps30 = (status == HAL_OK);
 	}
 	return status;
 }
@@ -258,10 +263,13 @@ HAL_StatusTypeDef sps30_IsOnOff(I2C_HandleTypeDef *hi2c, uint8_t *onOff)
 
 HAL_StatusTypeDef sps30_StartCleaning(I2C_HandleTypeDef *hi2c)
 {
+	HAL_StatusTypeDef status  = HAL_ERROR;
 	uint8_t cmd[2] = { (SPS30_CMD_START_CLEAN >> 8), (SPS30_CMD_START_CLEAN & 0xFF) };
 
 	// The sensor must be actively measuring for this command to work.
-	return HAL_I2C_Master_Transmit(hi2c, SPS30_I2C_ADDR, cmd, 2, 100);
+	if (_isSps30)
+		status =  HAL_I2C_Master_Transmit(hi2c, SPS30_I2C_ADDR, cmd, 2, 100);
+	return status;
 }
 
 HAL_StatusTypeDef sps30_GetAutoCleanInterval(I2C_HandleTypeDef *hi2c, uint32_t *interval_sec)

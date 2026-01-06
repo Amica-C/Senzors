@@ -5,6 +5,7 @@
  *      Author: Milan
  */
 
+#include "mysensors.h"
 #include "barometer8.h"
 
 // ILPS22QS I2C Address (SDO connected to GND by default on Barometer 8 Click)
@@ -32,6 +33,7 @@ static HAL_StatusTypeDef barometer_onOff(I2C_HandleTypeDef *hi2c, uint8_t onOff)
 		// 0x50 = 01010000 -> ODR: 50Hz & ON, AVG: 0 Low-pass filter disabled
 		uint8_t ctrl1 = onOff;//0x50;
 		status = HAL_I2C_Mem_Write(hi2c, ILPS22QS_I2C_ADDR, REG_CTRL_REG1, 1, &ctrl1, 1, 100);
+		_isBarometer = (status == HAL_OK);
 	}
 	return status;
 }
@@ -77,7 +79,7 @@ HAL_StatusTypeDef barometer_Off(I2C_HandleTypeDef *hi2c)
 
 HAL_StatusTypeDef barometer_Init(I2C_HandleTypeDef *hi2c)
 {
-	HAL_StatusTypeDef status = HAL_I2C_IsDeviceReady(hi2c, ILPS22QS_I2C_ADDR, 2, 2);	// prva kontrola
+	HAL_StatusTypeDef status = MY_I2C_IsDeviceReady(hi2c, ILPS22QS_I2C_ADDR, 2, 2);	// prva kontrola
 
 	if (status == HAL_OK)
 		do

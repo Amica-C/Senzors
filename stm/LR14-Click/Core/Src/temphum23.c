@@ -11,9 +11,10 @@
  * https://gemini.google.com/share/b64c25662edf
  */
 
+#include "mysensors.h"
 #include "temphum23.h"
 
-static uint16_t _tempHumAddr = 0;// - musi sa cez init 0x44; // pripadne 0x45
+static uint16_t _tempHumAddr = 0x44;// - musi sa cez init 0x44; // pripadne 0x45
 static int8_t _isTempHumSenzor = 0;
 static int8_t _isOnOff = 0; 	// dummy
 
@@ -21,10 +22,11 @@ tempHum_t _tempHumData = { };
 
 static HAL_StatusTypeDef tempHum_onOff(I2C_HandleTypeDef *hi2c, uint8_t onOff)
 {
-	HAL_StatusTypeDef status = _isTempHumSenzor ? HAL_OK : HAL_ERROR;
+	HAL_StatusTypeDef status = MY_I2C_IsDeviceReady(hi2c, (_tempHumAddr << 1), 2, 2);	// real control
 
 	if (status == HAL_OK)
 		_isOnOff = onOff;
+	_isTempHumSenzor = (status == HAL_OK);
 	return status;
 }
 
@@ -60,13 +62,17 @@ HAL_StatusTypeDef tempHum_Init(I2C_HandleTypeDef *hi2c) //
 {
 	HAL_StatusTypeDef status = HAL_ERROR;
 
+	/*
 	for (_tempHumAddr = 0x44; _tempHumAddr <= 0x45; _tempHumAddr++) //
 	{
-		status = HAL_I2C_IsDeviceReady(hi2c, _tempHumAddr << 1, 2, 2);	// prva kontrola
+		status = MY_I2C_IsDeviceReady(hi2c, _tempHumAddr << 1, 2, 2);	// prva kontrola
 		_isTempHumSenzor = (status == HAL_OK);
 		if (_isTempHumSenzor)
 			break;
 	}
+	*/
+	status = MY_I2C_IsDeviceReady(hi2c, (_tempHumAddr << 1), 2, 2);
+	_isTempHumSenzor = (status == HAL_OK);
 	return status;
 }
 
@@ -93,6 +99,7 @@ HAL_StatusTypeDef tempHum_Read(I2C_HandleTypeDef *hi2c) //
 	HAL_StatusTypeDef ret = HAL_ERROR;
 
 	if (_isTempHumSenzor) //
+	{
 		do //
 		{
 			if (!_isOnOff)
@@ -136,6 +143,7 @@ HAL_StatusTypeDef tempHum_Read(I2C_HandleTypeDef *hi2c) //
 				_tempHumData.humidity = 100;
 			ret = HAL_OK;
 		} while (0);
+	}
 	return ret;
 }
 

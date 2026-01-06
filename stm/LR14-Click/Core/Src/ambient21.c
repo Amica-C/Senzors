@@ -1,3 +1,4 @@
+#include "mysensors.h"
 #include "ambient21.h"
 
 #define AMBIENT_ADDR      (0x29 << 1) // Shifted for HAL
@@ -52,6 +53,7 @@ HAL_StatusTypeDef ambient_On(I2C_HandleTypeDef *hi2c)
 	uint8_t data;
 
 	if (_isAmbientSenzor)
+	{
 		do
 		{
 			// 1. Power on the sensor (Enable register)
@@ -81,7 +83,8 @@ HAL_StatusTypeDef ambient_On(I2C_HandleTypeDef *hi2c)
 						break;	// kalibracia...., ak mam hodnotu, mozem koncit
 			}
 		} while (0);
-
+		_isAmbientSenzor = (status == HAL_OK);
+	}
 	return status;
 }
 
@@ -107,7 +110,7 @@ HAL_StatusTypeDef ambient_Off(I2C_HandleTypeDef *hi2c)
 
 HAL_StatusTypeDef ambient_Init(I2C_HandleTypeDef *hi2c)
 {
-	HAL_StatusTypeDef status = HAL_I2C_IsDeviceReady(hi2c, AMBIENT_ADDR, 2, 2);	// prva kontrola
+	HAL_StatusTypeDef status = MY_I2C_IsDeviceReady(hi2c, AMBIENT_ADDR, 2, 2);	// prva kontrola
 	if (status == HAL_OK)
 		do
 		{

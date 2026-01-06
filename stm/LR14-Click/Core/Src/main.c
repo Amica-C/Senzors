@@ -227,6 +227,8 @@ int main(void)
 	sleeper_Init(&_readData, 3000);
 	sleeper_Init(&_sensorsOnOff, 30000);
 
+	HAL_Delay(5000);
+
 	// pripadne cistanie ser-portu
 	writeLog("start UUART read");
 	status = Uart_StartReceving(&huart1);

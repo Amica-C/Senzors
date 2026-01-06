@@ -4,8 +4,8 @@
  *  Created on: 29. 12. 2025
  *      Author: Milan
  */
-
-#include <scd41.h>
+#include "mysensors.h"
+#include "scd41.h"
 
 // I2C Addresses
 #define SCD41_ADDR (0x62 << 1)
@@ -64,9 +64,9 @@ static HAL_StatusTypeDef scd41_WriteWithCRC(I2C_HandleTypeDef *hi2c, uint16_t cm
 
 static HAL_StatusTypeDef scd41_onOff(I2C_HandleTypeDef *hi2c, uint16_t onOff)
 {
-	HAL_StatusTypeDef status = HAL_I2C_IsDeviceReady(hi2c, SCD41_ADDR, 2, 2);	// prva kontrola
+	HAL_StatusTypeDef status = HAL_ERROR;
 
-	if (status == HAL_OK)
+	if (_isScd41)
 	{
 		uint8_t cmd[2];
 		cmd[0] = (onOff >> 8);
@@ -74,6 +74,7 @@ static HAL_StatusTypeDef scd41_onOff(I2C_HandleTypeDef *hi2c, uint16_t onOff)
 		status = HAL_I2C_Master_Transmit(hi2c, SCD41_ADDR, cmd, 2, HAL_MAX_DELAY);
 		if (status == HAL_OK)
 			HAL_Delay(500);	// Wait for sensor to process start
+		_isScd41 = (status == HAL_OK);
 	}
 	return status;
 }
@@ -97,7 +98,7 @@ HAL_StatusTypeDef scd41_Off(I2C_HandleTypeDef *hi2c)
 
 HAL_StatusTypeDef scd41_Init(I2C_HandleTypeDef *hi2c)
 {
-	HAL_StatusTypeDef ret = HAL_I2C_IsDeviceReady(hi2c, SCD41_ADDR, 2, 2);	// prva kontrola
+	HAL_StatusTypeDef ret = MY_I2C_IsDeviceReady(hi2c, SCD41_ADDR, 2, 2);	// prva kontrola
 
 	if (ret == HAL_OK)
 	{

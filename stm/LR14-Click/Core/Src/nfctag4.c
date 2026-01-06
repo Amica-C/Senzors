@@ -15,19 +15,17 @@
 #define REG_MB_LEN_DYN        0x200E
 #define REG_MB_RAM_START      0x2008
 
+#include "mysensors.h"
 #include "nfctag4.h"
 #include <string.h>
 
-#include "nfctag4.h"
-#include <string.h>
-
-static int8_t _isNtctag4 = 0;	// indikator, ci je senzor aktivny
+static int8_t _isNfctag4 = 0;	// indikator, ci je senzor aktivny
 
 int8_t nfc4_Is(I2C_HandleTypeDef *hi2c, int8_t tryInit)
 {
-	if (!_isNtctag4 && tryInit)
+	if (!_isNfctag4 && tryInit)
 		nfc4_Init(hi2c);
-	return _isNtctag4;
+	return _isNfctag4;
 }
 
 static HAL_StatusTypeDef nfc4_PresentPassword(I2C_HandleTypeDef *hi2c)
@@ -45,7 +43,7 @@ static HAL_StatusTypeDef nfc4_onOff(I2C_HandleTypeDef *hi2c, uint8_t onOff)
 {
 	HAL_StatusTypeDef status = HAL_ERROR;
 
-	if (_isNtctag4)
+	if (_isNfctag4)
 	{
 		uint8_t reg_val, i; //, session_status = 0;
 
@@ -59,6 +57,7 @@ static HAL_StatusTypeDef nfc4_onOff(I2C_HandleTypeDef *hi2c, uint8_t onOff)
 				break;	// for
 			HAL_Delay(10);
 		}
+		_isNfctag4 = (status == HAL_OK);
 	}
 	return status;
 }
@@ -124,7 +123,7 @@ HAL_StatusTypeDef nfc4_IsOn(I2C_HandleTypeDef *hi2c, uint8_t *onOff)
 {
 	HAL_StatusTypeDef status = HAL_ERROR;
 
-	if (_isNtctag4)
+	if (_isNfctag4)
 	{
 		uint8_t reg_val = 0;
 		status = HAL_I2C_Mem_Read(hi2c, NFC4_I2C_ADDR_USER, REG_GPO_CTRL_DYN, I2C_MEMADD_SIZE_16BIT, &reg_val, 1, 100);
@@ -143,7 +142,7 @@ HAL_StatusTypeDef nfc4_Init(I2C_HandleTypeDef *hi2c)
 	do
 	{
 		// 1. Wait for device to be ready
-		if ((status = HAL_I2C_IsDeviceReady(hi2c, NFC4_I2C_ADDR_USER, 10, 100)) != HAL_OK)
+		if ((status = MY_I2C_IsDeviceReady(hi2c, NFC4_I2C_ADDR_USER, 10, 100)) != HAL_OK)
 			break;
 #if 0
 		// 2. Present Password to modify system registers
@@ -185,7 +184,7 @@ HAL_StatusTypeDef nfc4_Init(I2C_HandleTypeDef *hi2c)
 		// --- MANDATORY DELAY ---
 		// The chip needs time to process the Mailbox Enable before changing GPO settings
 		HAL_Delay(20);
-		_isNtctag4 = 1;
+		_isNfctag4 = 1;
 		nfc4_Off(hi2c);
 	} while (0);
 	return status;
@@ -193,14 +192,14 @@ HAL_StatusTypeDef nfc4_Init(I2C_HandleTypeDef *hi2c)
 
 HAL_StatusTypeDef nfc4_ReadEEPROM(I2C_HandleTypeDef *hi2c, uint16_t addr, uint8_t *pData, uint16_t len)
 {
-	return (_isNtctag4) ? HAL_I2C_Mem_Read(hi2c, NFC4_I2C_ADDR_USER, addr, 2, pData, len, 500) : HAL_ERROR;
+	return (_isNfctag4) ? HAL_I2C_Mem_Read(hi2c, NFC4_I2C_ADDR_USER, addr, 2, pData, len, 500) : HAL_ERROR;
 }
 
 HAL_StatusTypeDef nfc4_WriteEEPROM(I2C_HandleTypeDef *hi2c, uint16_t addr, uint8_t *pData, uint16_t len)
 {
 	HAL_StatusTypeDef status = HAL_ERROR;
 
-	if (_isNtctag4)
+	if (_isNfctag4)
 		for (uint16_t i = 0; i < len; i += 4)
 		{ // ST25DV writes in blocks
 			uint16_t chunk = (len - i) > 4 ? 4 : (len - i);
@@ -216,7 +215,7 @@ void nfc4_ResetEEPROM(I2C_HandleTypeDef *hi2c, uint16_t len)
 {
 	uint8_t zero = 0;
 
-	if (_isNtctag4)
+	if (_isNfctag4)
 		for (uint16_t i = 0; i < len; i++)
 		{
 			nfc4_WriteEEPROM(hi2c, i, &zero, 1);
@@ -227,7 +226,7 @@ HAL_StatusTypeDef nfc4_ProcessMailBox(I2C_HandleTypeDef *hi2c)
 {
 	uint8_t mb_ctrl, mb_len;
 
-	if (_isNtctag4)
+	if (_isNfctag4)
 	{
 		// Check if Mailbox has a message from RF (Phone)
 		HAL_I2C_Mem_Read(hi2c, NFC4_I2C_ADDR_USER, REG_MB_CTRL_DYN, 2, &mb_ctrl, 1, 100);
@@ -248,7 +247,7 @@ HAL_StatusTypeDef nfc4_ProcessMailBox(I2C_HandleTypeDef *hi2c)
 
 HAL_StatusTypeDef nfc4_WriteMailBoxNDEF(I2C_HandleTypeDef *hi2c, char *text)
 {
-	if (!_isNtctag4)
+	if (!_isNfctag4)
 		return HAL_ERROR;
 
 	uint8_t payload[128];
@@ -269,7 +268,7 @@ HAL_StatusTypeDef nfc4_WriteMailBoxNDEF(I2C_HandleTypeDef *hi2c, char *text)
 
 HAL_StatusTypeDef nfc4_SetRFMgmt(I2C_HandleTypeDef *hi2c, uint8_t enable)
 {
-	if (!_isNtctag4)
+	if (!_isNfctag4)
 		return HAL_ERROR;
 
 	nfc4_PresentPassword(hi2c);
