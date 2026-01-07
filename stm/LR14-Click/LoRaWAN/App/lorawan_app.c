@@ -50,7 +50,7 @@ static LmHandlerParams_t Params = {
 	.DataBufferMaxSize = 242, 
 	.DataBuffer = NULL, 
 	.PingSlotPeriodicity = LORAWAN_CLASSB_PINGSLOT_PERIODICITY,
-	.RxBCTimeout = 3000  // 3 seconds timeout for Class B/C downlinks
+	.RxBCTimeout = 3000,  // 3 seconds timeout for Class B/C downlinks
 };
 
 bool LoRaWAN_SetJoinCredentials(const uint8_t joinEui[8], const uint8_t appKey[16])
