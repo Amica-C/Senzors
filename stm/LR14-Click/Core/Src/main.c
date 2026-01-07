@@ -432,7 +432,28 @@ int main(void)
 			}
 
 			if (_sensBuffer[0])
+			{
 				writeLogNL(_sensBuffer);
+				
+				// Send sensor data via LoRaWAN if joined
+				if (LoRaWAN_IsJoined())
+				{
+					// Send buffer with confirmation (confirmed message)
+					int result = LoRaWAN_Send((uint8_t*)_sensBuffer, strlen(_sensBuffer), 2, true);
+					if (result == 0)
+					{
+						writeLog("LoRaWAN: Data sent (confirmed)");
+					}
+					else
+					{
+						writeLog("LoRaWAN: Send failed, error=%d", result);
+					}
+				}
+				else
+				{
+					writeLog("LoRaWAN: Not joined yet, skipping send");
+				}
+			}
 			sleeper_Next(&_readData);	// next az tu, lebo senzor moze mat odozvu
 		}
 		/*
