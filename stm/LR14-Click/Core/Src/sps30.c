@@ -96,7 +96,7 @@ HAL_StatusTypeDef sps30_Init(I2C_HandleTypeDef *hi2c)
 	status = HAL_I2C_Master_Transmit(hi2c, SPS30_I2C_ADDR, cmd, 2, 100);
 	HAL_Delay(10); // Minimum 5ms delay required after wakeup
 
-	status = MY_I2C_IsDeviceReady(hi2c, SPS30_I2C_ADDR, 2, 2);	// prva kontrola
+	status = MY_I2C_IsDeviceReady(hi2c, SPS30_I2C_ADDR, 2, 2);	// first check
 
 	if (status == HAL_OK)
 	{

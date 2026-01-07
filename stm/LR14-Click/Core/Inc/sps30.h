@@ -4,12 +4,12 @@
  *  Created on: 2. 1. 2026
  *      Author: Milan
  *
- *  snimac SPS30 prach - castice  SPS30Datasheet.pdf
+ *  sensor SPS30 dust - particles  SPS30Datasheet.pdf
  *  https://sensirion.com/products/catalog/SPS30
  *  https://cdn.sparkfun.com/assets/2/d/2/a/6/Sensirion_SPS30_Particulate_Matter_Sensor_v0.9_D1__1_.pdf
  *
- *  SPS30 moze byt priamo napojeny na SDA/SCL (I2C) alebo prostrednictvom HVAC click modulu
- *  tento senzor na rozdiel od ostatnych ide na 5V
+ *  SPS30 can be directly connected to SDA/SCL (I2C) or through HVAC click module
+ *  this sensor unlike others runs on 5V
  *
  *  gemini: https://gemini.google.com/share/24ed9f3930ce
  */
@@ -57,7 +57,7 @@
  Unhealthy			55.5 – 150.4	Everyone may begin to experience health effects.
  Very Unhealthy		150.5 – 250.4	Health alert: everyone may experience serious effects.
  */
-// nemenit poradie !!!
+// don't change order !!!
 typedef struct
 {
 	float mass_pm1_0;
@@ -81,66 +81,66 @@ typedef enum
 extern sps30_t _sps30Data;
 
 /**
- * @brief vyjadrenie kvality podla 2.5mm castic v μg/m3
+ * @brief expression of quality according to 2.5mm particles in μg/m3
  */
 AQI_Level_t sps30_ClassifyPM25(char** label);
 
 /**
- * @brief - kontrola, ci je pritomny SPS30 senzor
- * @param tryInit - v pripade, ak nie je senzor este inicializovany, 1 - pokus o znova inicializovanie, 0 - nie
- * @retval 1 - je pritomny, 0 - nie je
+ * @brief - check if SPS30 sensor is present
+ * @param tryInit - in case sensor is not yet initialized, 1 - attempt to initialize again, 0 - no
+ * @retval 1 - is present, 0 - is not
  */
 int8_t sps30_Is(I2C_HandleTypeDef *hi2c, int8_t tryInit);
 
 /**
- * @brief inicializacia senzora sps30
- * @retval HAL_OK - senzor je pritomny, HAL_ERROR - chyba
+ * @brief initialization of sensor sps30
+ * @retval HAL_OK - sensor is present, HAL_ERROR - error
  */
 HAL_StatusTypeDef sps30_Init(I2C_HandleTypeDef *hi2c);
 
 /**
- * @brief Zapnutie lasera a ventilatora, aby sa mohlo robit meranie
+ * @brief Turn on laser and fan to allow measurements
  * @retval HAL_OK, HAL_ERROR
  */
 HAL_StatusTypeDef sps30_On(I2C_HandleTypeDef *hi2c);
 
 /**
- * @brief Vypnutie lasera a ventilatora, aby sa mohlo robit meranie
+ * @brief Turn off laser and fan to stop measurements
  * @retval HAL_OK, HAL_ERROR
  */
 HAL_StatusTypeDef sps30_Off(I2C_HandleTypeDef *hi2c);
 
 /**
- * @brief Kontrola, ci su data pritomne
+ * @brief Check if data is available
  * @retval HAL_OK, HAL_ERROR, HAL_BUSY
  */
 HAL_StatusTypeDef sps30_IsDataReady(I2C_HandleTypeDef *hi2c);
 
 /**
- * @brief Citanie dat ak su data k dispozicii
+ * @brief Read data if data is available
  */
 HAL_StatusTypeDef sps30_Read(I2C_HandleTypeDef *hi2c);
 
 /**
- * @brief - helper ci je senzor zapnuty, alebo nie
+ * @brief - helper to check if sensor is on or not
  */
 HAL_StatusTypeDef sps30_IsOnOff(I2C_HandleTypeDef *hi2c, uint8_t *onOff);
 
 /**
- * @brief manualne spustenie ventilator na cistenie, bezi cca 10s
+ * @brief manually start fan for cleaning, runs for about 10s
  * Note: The sensor will be busy cleaning for 10 seconds.
  * Data read during this time might be inconsistent due to high airflow.
  */
 HAL_StatusTypeDef sps30_StartCleaning(I2C_HandleTypeDef *hi2c);
 
 /**
- * @brief interval pre auto cistenie
+ * @brief interval for auto cleaning
  *
  */
 HAL_StatusTypeDef sps30_GetAutoCleanInterval(I2C_HandleTypeDef *hi2c, uint32_t *interval_sec);
 
 /**
- * @brief nastavenie intervalu pre auto cistenie
+ * @brief set interval for auto cleaning
  */
 HAL_StatusTypeDef sps30_SetAutoCleanInterval(I2C_HandleTypeDef *hi2c, uint32_t interval_sec);
 

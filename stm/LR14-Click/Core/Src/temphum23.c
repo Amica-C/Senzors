@@ -3,9 +3,9 @@
  *
  * Temp&hum 23 click  SHT45.pdf   https://download.mikroe.com/documents/datasheets/SHT45-AD1B-R2_datasheet.pdf
  *
- * Mohol som zobrat kniznicu priamo z https://github.com/MikroElektronika/mikrosdk_click_v2/blob/master/clicks/temphum23/lib_temphum23/src/temphum23.c
- * ale je tam problem ze musim dotiahnut dalsie moduly.
- * Preto sa pojde cestou priameho citania z I2C
+ * I could have taken the library directly from https://github.com/MikroElektronika/mikrosdk_click_v2/blob/master/clicks/temphum23/lib_temphum23/src/temphum23.c
+ * but there is a problem that I would need to pull in other modules.
+ * Therefore going the route of direct reading from I2C
  *
  * geminy:
  * https://gemini.google.com/share/b64c25662edf
@@ -14,7 +14,7 @@
 #include "mysensors.h"
 #include "temphum23.h"
 
-static uint16_t _tempHumAddr = 0x44;// - musi sa cez init 0x44; // pripadne 0x45
+static uint16_t _tempHumAddr = 0x44;// - must be set via init 0x44; // or 0x45
 static int8_t _isTempHumSenzor = 0;
 static int8_t _isOnOff = 0; 	// dummy
 
@@ -65,7 +65,7 @@ HAL_StatusTypeDef tempHum_Init(I2C_HandleTypeDef *hi2c) //
 	/*
 	for (_tempHumAddr = 0x44; _tempHumAddr <= 0x45; _tempHumAddr++) //
 	{
-		status = MY_I2C_IsDeviceReady(hi2c, _tempHumAddr << 1, 2, 2);	// prva kontrola
+		status = MY_I2C_IsDeviceReady(hi2c, _tempHumAddr << 1, 2, 2);	// first check
 		_isTempHumSenzor = (status == HAL_OK);
 		if (_isTempHumSenzor)
 			break;

@@ -19,7 +19,7 @@
 #include "nfctag4.h"
 #include <string.h>
 
-static int8_t _isNfctag4 = 0;	// indikator, ci je senzor aktivny
+static int8_t _isNfctag4 = 0;	// indicator whether sensor is active
 
 int8_t nfc4_Is(I2C_HandleTypeDef *hi2c, int8_t tryInit)
 {
@@ -152,7 +152,7 @@ HAL_StatusTypeDef nfc4_Init(I2C_HandleTypeDef *hi2c)
 		// --- CRITICAL: Wait for the Session to stabilize ---
 		HAL_Delay(50);
 
-		// 3. Requires Password presentation first - toto nejde
+		// 3. Requires Password presentation first - this doesn't work
 
 		 reg_val = 0x01;
 		 if ((status = HAL_I2C_Mem_Write(hi2c, NFC4_I2C_ADDR_SYSTEM, 0x000D, 2, &reg_val, 1, 100)) != HAL_OK)

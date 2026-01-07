@@ -12,8 +12,8 @@
 #define SPS30_ADDR (0x69 << 1)
 
 // SCD41 Commands
-#define SCD41_CMD_START_PERIODIC 0x21b1	// citanie - rychle, ale vacsia spotreba
-#define SCD41_CMD_START_LOW_POWER_PERIODIC 0x21ac	// pomale citanie, len kazych 30s
+#define SCD41_CMD_START_PERIODIC 0x21b1	// reading - fast, but higher consumption
+#define SCD41_CMD_START_LOW_POWER_PERIODIC 0x21ac	// slow reading, only every 30s
 #define SCD41_CMD_START_SINGLE_SHOT 0x219D
 
 #define SCD41_CMD_START SCD41_CMD_START_PERIODIC
@@ -27,7 +27,7 @@
 #define SCD41_CMD_REINIT         0x3646
 
 
-// default nastavenie
+// default settings
 scd41_t _scd41Data = { .altitude = -1, .co2 = -1, .humidity = -1.0f, .temperature = -1000.0f};
 
 static int8_t _isScd41 = 0;
@@ -98,7 +98,7 @@ HAL_StatusTypeDef scd41_Off(I2C_HandleTypeDef *hi2c)
 
 HAL_StatusTypeDef scd41_Init(I2C_HandleTypeDef *hi2c)
 {
-	HAL_StatusTypeDef ret = MY_I2C_IsDeviceReady(hi2c, SCD41_ADDR, 2, 2);	// prva kontrola
+	HAL_StatusTypeDef ret = MY_I2C_IsDeviceReady(hi2c, SCD41_ADDR, 2, 2);	// first check
 
 	if (ret == HAL_OK)
 	{
@@ -138,8 +138,8 @@ HAL_StatusTypeDef scd41_Init(I2C_HandleTypeDef *hi2c)
 }
 
 /**
- * @brief kontrola, ci su data k dispozicii
- * @retval HAL_OK - data su, mozu sa precitat, HAL_BUSY - data este niesu, HAL_ERROR - chyba
+ * @brief check if data is available
+ * @retval HAL_OK - data is available, can be read, HAL_BUSY - data not yet available, HAL_ERROR - error
  */
 HAL_StatusTypeDef scd41_IsDataReady(I2C_HandleTypeDef *hi2c)
 {

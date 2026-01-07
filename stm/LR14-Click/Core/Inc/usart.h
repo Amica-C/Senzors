@@ -46,18 +46,18 @@ void MX_USART2_UART_Init(void);
 
 /* USER CODE BEGIN Prototypes */
 /**
- * @brief Zapis na UART1
+ * @brief Write to UART1
  */
 HAL_DMA_StateTypeDef Uart_Info(const char *strInfo);
 
 /**
- * @brief zaciatok citania
- * @param uart - handle, na uart, ktory sa pouziva
+ * @brief start reading
+ * @param uart - handle for the uart being used
  */
 HAL_DMA_StateTypeDef Uart_StartReceving(UART_HandleTypeDef *uart);
 
 /**
- * @brief pokracovanie v dalsom citani, ak dosli data
+ * @brief continue with next reading if data arrived
  */
 HAL_DMA_StateTypeDef Uart_NextReceving();
 
