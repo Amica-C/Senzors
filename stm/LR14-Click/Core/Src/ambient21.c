@@ -23,7 +23,7 @@ typedef enum
 // Global or static variable to track state
 static TSL2591_Gain_t _currentGain = TSL2591_GAIN_MED;
 
-static int8_t _isAmbientSenzor = 0;	// indikator, ci je senzor
+static int8_t _isAmbientSenzor = 0;	// indicator whether sensor is present
 
 int8_t ambient_Is(I2C_HandleTypeDef *hi2c, int8_t tryInit) //
 {
@@ -80,7 +80,7 @@ HAL_StatusTypeDef ambient_On(I2C_HandleTypeDef *hi2c)
 			{
 				for (data = 0; data < 4; data++)
 					if (ambient_ReadLux(hi2c, NULL) == HAL_OK)
-						break;	// kalibracia...., ak mam hodnotu, mozem koncit
+						break;	// calibration...., if value obtained, can finish
 			}
 		} while (0);
 		_isAmbientSenzor = (status == HAL_OK);
@@ -110,15 +110,15 @@ HAL_StatusTypeDef ambient_Off(I2C_HandleTypeDef *hi2c)
 
 HAL_StatusTypeDef ambient_Init(I2C_HandleTypeDef *hi2c)
 {
-	HAL_StatusTypeDef status = MY_I2C_IsDeviceReady(hi2c, AMBIENT_ADDR, 2, 2);	// prva kontrola
+	HAL_StatusTypeDef status = MY_I2C_IsDeviceReady(hi2c, AMBIENT_ADDR, 2, 2);	// first check
 	if (status == HAL_OK)
 		do
 		{
 			_isAmbientSenzor = 1;
-			// 1. zapne senzor a skalibruje
+			// 1. turn on sensor and calibrate
 			if ((status = ambient_On(hi2c)) != HAL_OK)
 				break;
-			// 2. vypnutie senzora
+			// 2. turn off sensor
 			if ((status = ambient_Off(hi2c)) != HAL_OK)
 				break;
 		} while (0);

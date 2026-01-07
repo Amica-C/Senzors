@@ -7,9 +7,9 @@
  * Barometer 8 Click,  ILPS22QS.pdf datasheet https://www.st.com/resource/en/datasheet/ilps22qs.pdf
  *       ILPS22QS
  *
- * kod vygenerovany cez geminy: https://gemini.google.com/share/76db6b22d296
+ * code generated via Gemini: https://gemini.google.com/share/76db6b22d296
  *
- * Senzor je ptrebne explicitne zapnut a potom vypnut, aby sa setrila spotreba
+ * The sensor needs to be explicitly turned on and then off to save power consumption
  *
  */
 
@@ -25,50 +25,50 @@ typedef struct //
 } barometer_t;
 
 /**
- * @brief data(struktura) kde je ulozena hodnota tlaku a vlhkosti
+ * @brief data(structure) where pressure and humidity values are stored
  */
 extern barometer_t _tempBarometerData;
 
 /**
- * @brief - kontrola, ci je pritomny svetelny senzor
- * @param tryInit - v pripade, ak nie je senzor este inicialozovany, 1 - pokus o znova inicializovanie, 0 - nie
- * @retval 1 - je pritomny, 0 - nie je
+ * @brief - check if light sensor is present
+ * @param tryInit - in case sensor is not yet initialized, 1 - attempt to initialize again, 0 - no
+ * @retval 1 - is present, 0 - is not
  */
 int8_t barometer_Is(I2C_HandleTypeDef *hi2c, int8_t tryInit);
 
 /**
- * @brief - inicializa senzora, kontrola, ci sa naozaj jedna o tento senzor. Po kontrole sa senzor vypne, aby sa setril prud
+ * @brief - initialize sensor, check if it really is this sensor. After check the sensor is turned off to save power
  */
 HAL_StatusTypeDef barometer_Init(I2C_HandleTypeDef *hi2c);
 
 /**
- * @brief kontrola, ci je senzor zapnuty alebo nie
- * @param onOff - na vystupe obsahuje 1-on 0-off, ale len ak je status HAL_OK
- * @retval HAL_OK - onOff obsahuje stav senzora, HAL_ERROR
+ * @brief check if sensor is turned on or not
+ * @param onOff - on output contains 1-on 0-off, but only if status is HAL_OK
+ * @retval HAL_OK - onOff contains sensor state, HAL_ERROR
  */
 HAL_StatusTypeDef barometer_IsOn(I2C_HandleTypeDef *hi2c, uint8_t *onOff);
 
 /**
- * @brief zapnutie sezora
+ * @brief turn on sensor
  * @retval HAL_OK, HAL_ERROR
  */
 HAL_StatusTypeDef barometer_On(I2C_HandleTypeDef *hi2c);
 
 /**
- * @brief vypnutie sezora
+ * @brief turn off sensor
  * @retval HAL_OK, HAL_ERROR
  */
 HAL_StatusTypeDef barometer_Off(I2C_HandleTypeDef *hi2c);
 
 
 /**
- * @brief precitanie hodnoty so senzora, tlak a teplota.
- * Senzor sa predtym musi zapnut
+ * @brief read value from sensor, pressure and temperature.
+ * Sensor must be turned on before
  * @retval
- * 	HAL_OK - data mam,
- * 	HAL_BUSY - dochadza k dalsiemu citaniu,
- * 	HAL_TIMEOUT - senzor nie je zapnuty
- * 	HAL_ERROR - chyba
+ * 	HAL_OK - have data,
+ * 	HAL_BUSY - next reading in progress,
+ * 	HAL_TIMEOUT - sensor is not turned on
+ * 	HAL_ERROR - error
  */
 HAL_StatusTypeDef barometer_Read(I2C_HandleTypeDef *hi2c);
 

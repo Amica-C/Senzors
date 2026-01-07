@@ -4,12 +4,12 @@
  *  Created on: 29. 12. 2025
  *      Author: Milan
  *
- * citanie zo senzorov SCD41
+ * reading from sensors SCD41
  *
- *  sensor HVAC Click, SCD41 - CO2, teplota, vlhkost    SCD41Datasheet.pdf
+ *  sensor HVAC Click, SCD41 - CO2, temperature, humidity    SCD41Datasheet.pdf
  *  https://www.mikroe.com/hvac-click
  *  https://download.mikroe.com/documents/datasheets/SCD41%20Datasheet.pdf
- *  Senzor je elekricky dost narocny, preto je potrebne riadit citanie okolia cez Start/Stop
+ *  Sensor is electrically quite demanding, therefore it is necessary to control environment reading via Start/Stop
  *
  *
  *  geminy:
@@ -35,39 +35,39 @@ typedef struct
 extern scd41_t _scd41Data;
 
 /**
- * @brief - kontrola, ci je pritomny CO2 senzor
- * @param tryInit - v pripade, ak nie je senzor este inicializovany, 1 - pokus o znova inicializovanie, 0 - nie
- * @retval 1 - je pritomny, 0 - nie je
+ * @brief - check if CO2 sensor is present
+ * @param tryInit - in case sensor is not yet initialized, 1 - attempt to initialize again, 0 - no
+ * @retval 1 - is present, 0 - is not
  */
 int8_t scd41_Is(I2C_HandleTypeDef *hi2c, int8_t tryInit);
 
 /**
- * @brief inicializacia senzora sdc41
- * @retval HAL_OK - senzor je pritomny, HAL_ERROR - chyba
+ * @brief initialization of sensor sdc41
+ * @retval HAL_OK - sensor is present, HAL_ERROR - error
  */
 HAL_StatusTypeDef scd41_Init(I2C_HandleTypeDef *hi2c);
 
 /**
- * @brief spustenie citania - zapnutie senzora, mod citania moze byt:
- * SCD41_CMD_START_PERIODIC - kazdych 5s - toto je asi najpresnejsie
- * SCD41_CMD_START_LOW_POWER_PERIODIC - kazdych 30s
+ * @brief start reading - turn on sensor, reading mode can be:
+ * SCD41_CMD_START_PERIODIC - every 5s - this is probably most accurate
+ * SCD41_CMD_START_LOW_POWER_PERIODIC - every 30s
  */
 HAL_StatusTypeDef scd41_On(I2C_HandleTypeDef *hi2c);
 
 /**
- * @brief zastavenie citania
+ * @brief stop reading
  */
 HAL_StatusTypeDef scd41_Off(I2C_HandleTypeDef *hi2c);
 
 /**
- * @brief kontrola, ci su data k dispozicii
- * @retval HAL_OK - data su, mozu sa precitat, HAL_BUSY - data este nie su, HAL_ERROR - chyba
+ * @brief check if data is available
+ * @retval HAL_OK - data is available, can be read, HAL_BUSY - data not yet available, HAL_ERROR - error
  */
 HAL_StatusTypeDef scd41_IsDataReady(I2C_HandleTypeDef *hi2c);
 
 /**
- * @brief precitanie hodnota zo senzora
- * @retval HAL_OK - mam data, HAL_BUSY - data este nie su, HAL_ERROR - chyba
+ * @brief read value from sensor
+ * @retval HAL_OK - have data, HAL_BUSY - data not yet available, HAL_ERROR - error
  */
 HAL_StatusTypeDef scd41_Read(I2C_HandleTypeDef *hi2c);
 

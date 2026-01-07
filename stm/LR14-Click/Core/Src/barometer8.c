@@ -79,7 +79,7 @@ HAL_StatusTypeDef barometer_Off(I2C_HandleTypeDef *hi2c)
 
 HAL_StatusTypeDef barometer_Init(I2C_HandleTypeDef *hi2c)
 {
-	HAL_StatusTypeDef status = MY_I2C_IsDeviceReady(hi2c, ILPS22QS_I2C_ADDR, 2, 2);	// prva kontrola
+	HAL_StatusTypeDef status = MY_I2C_IsDeviceReady(hi2c, ILPS22QS_I2C_ADDR, 2, 2);	// first check
 
 	if (status == HAL_OK)
 		do
@@ -95,7 +95,7 @@ HAL_StatusTypeDef barometer_Init(I2C_HandleTypeDef *hi2c)
 			}
 			_isBarometer = 1;
 
-			// kontrola zapnutia/vypnutia
+			// check turning on/off
 			if ((status = barometer_On(hi2c)) != HAL_OK)
 				break;
 			if ((status = barometer_Off(hi2c)) != HAL_OK)
@@ -113,7 +113,7 @@ HAL_StatusTypeDef barometer_Read(I2C_HandleTypeDef *hi2c)
 	{
 		do
 		{
-			// kontrola, ci je senzor zapnuty
+			// check if sensor is turned on
 			if ((status = barometer_IsOn(hi2c, &raw_data[0])) != HAL_OK)
 				break;
 			if (!raw_data[0])

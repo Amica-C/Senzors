@@ -57,13 +57,13 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-sleeper_t _readData = { };	// casovac citanie dat zo senzorov
-sleeper_t _sensorsOnOff = { };	// casovac zapinania,vypinania senzorov
-uint8_t _isSensorOn = 0;	// indikator, ci senzory idu alebo nie
+sleeper_t _readData = { };	// timer for reading data from sensors
+sleeper_t _sensorsOnOff = { };	// timer for turning on/off sensors
+uint8_t _isSensorOn = 0;	// indicator whether sensors are running or not
 flashCS_t _flash = { .csPort = SPI1_CS_GPIO_Port, .csPin = SPI1_CS_Pin, .spi = &hspi1, .is = 0 };
 
 volatile uint8_t nfc_interrupt_flag = 0;
-char _sensBuffer[1024] = { };	// buffer senzoru
+char _sensBuffer[1024] = { };	// sensor buffer
 int8_t _tryInit = 1;			// xxx_Is - pokus o volanie init
 /* USER CODE END PV */
 
@@ -153,7 +153,7 @@ void nfc4_OnMailboxData(uint8_t *data, uint16_t len)
 {
 //	int stop=0;
 //	writeLog("mam data");
-	// toto nefunguje, MailBox proste nejde, vzdavam to a jebem na to.....
+	// this doesn't work, MailBox just doesn't work, giving up on it.....
 }
 
 void sensBuffer_Reset()
@@ -172,7 +172,7 @@ void sensBuffer_Add(const char *format, ...)
 }
 
 /**
- * @brief zapnutie/vypnutie senzorov
+ * @brief turn on/off sensors
  */
 void sensorsOnOff(uint8_t onOff)
 {
@@ -247,7 +247,7 @@ int main(void)
 	writeLog("UART read: %d", (int) status);
 	//I2C_Scan(&hi2c2);
 
-	// inicializovanie jednotlych senzorov
+	// initialization of individual sensors
 	status = tempHum_Init(&hi2c2);
 	writeLog((status == HAL_OK) ? "tempHum23 sensor: Init OK" : "tempHum23 sensor: Init failed.");
 
@@ -271,7 +271,7 @@ int main(void)
 	writeLog((status == HAL_OK) ? "sps30 senzor: Init OK" : "sps30 senzor: Init failed.");
 
 	/*
-	 // priklad zapisu - prepisu v EEPROM
+	 // example of write - overwrite in EEPROM
 	 if (status == HAL_OK)
 	 {
 	 uint8_t dat;
@@ -288,7 +288,7 @@ int main(void)
 	 }*/
 
 	//nfc4_SetRFMgmt(&hi2c1, 1);
-	// priklad zapisu a citanie do flash
+	// example of write and read to flash
 	/*
 	 if (flash_Is(&_flash, _tryInit))
 	 {
@@ -466,7 +466,7 @@ int main(void)
 					writeLog("LoRaWAN: Not joined yet, skipping send");
 				}
 			}
-			sleeper_Next(&_readData);	// next az tu, lebo senzor moze mat odozvu
+			sleeper_Next(&_readData);	// next here, because sensor may have response
 		}
 		/*
 		 if (scd41_Is(&hi2c2, _tryInit))
@@ -478,7 +478,7 @@ int main(void)
 		 */
 		if (nfc_interrupt_flag)
 		{
-			writeLog("nfc4 tag interrupt");	// tu neviem, co s tym.... a ci to ma vyznam
+			writeLog("nfc4 tag interrupt");	// don't know what to do with this.... and whether it makes sense
 			nfc_interrupt_flag = 0;
 			nfc4_ProcessMailBox(&hi2c2);
 			//nfc4_WriteMailBoxNDEF(&hi2c2, "picus");

@@ -5,16 +5,16 @@
  *      Author: Milan
  *
  *  NFC 4 tag click,  ST25R3916.pdf  https://download.mikroe.com/documents/datasheets/ST25R3916%20Datasheet.pdf
- *  nfc - zapis a citanie cez EEPROM, cez mail box to nejde, takze zatial nema vyznam aktivovat cez INT, aby nesla zbytocne spotreba
- *  heslo ako default je 8x 0h
+ *  nfc - write and read via EEPROM, via mail box it doesn't work, so for now it makes no sense to activate via INT to avoid unnecessary consumption
+ *  password default is 8x 0h
  *
- *  EEPROM funguje....
+ *  EEPROM works....
  *
  *
- *  ale nefunguje MailBox - neviem citat a zapisovat do MailBoxu.
- *  Skusal som to cez CHAPGPT aj GENIMI, ale nepodarilo sa mi preniest data, takze to asi nema vyznam. RF je aj tak staticke
+ *  but MailBox doesn't work - I can't read and write to MailBox.
+ *  I tried it via ChatGPT and Gemini, but couldn't transfer data, so it probably makes no sense. RF is static anyway
  *
- *  Nie je to este celkom jasnr=e, ako to bude bavit
+ *  It's not entirely clear yet how it will work
  *
  */
 
@@ -25,9 +25,9 @@
 
 
 /**
- * @brief - kontrola, ci je pritomny nfc4 tag senzor
- * @param tryInit - v pripade, ak nie je senzor este inicialozovany, 1 - pokus o znova inicializovanie, 0 - nie
- * @retval 1 - je pritomny, 0 - nie je
+ * @brief - check if nfc4 tag sensor is present
+ * @param tryInit - in case sensor is not yet initialized, 1 - attempt to initialize again, 0 - no
+ * @retval 1 - is present, 0 - is not
  */
 int8_t nfc4_Is(I2C_HandleTypeDef *hi2c, int8_t tryInit);
 
@@ -42,34 +42,34 @@ HAL_StatusTypeDef nfc4_Init(I2C_HandleTypeDef *hi2c);
 void nfc4_ResetEEPROM(I2C_HandleTypeDef *hi2c, uint16_t len);
 
 /**
- * @brief Zapis na adresu
+ * @brief Write to address
  */
 HAL_StatusTypeDef nfc4_WriteEEPROM(I2C_HandleTypeDef *hi2c, uint16_t addr, uint8_t *pData, uint16_t len);
 
 /**
- * @brief Citanie z EEPPROM
+ * @brief Read from EEPROM
  */
 HAL_StatusTypeDef nfc4_ReadEEPROM(I2C_HandleTypeDef *hi2c, uint16_t addr, uint8_t *pData, uint16_t len);
 
 /**
- * @brief ziskanie stavu
+ * @brief get state
  */
 HAL_StatusTypeDef nfc4_IsOn(I2C_HandleTypeDef *hi2c, uint8_t *onOff);
 
 /**
- * @brief Zapnutie sensora pre posielanie INT, ze NFC sa aktivoval. Stupa spotreba. Nie je to nutne, aj tak sa cita cez EEPROM
- * Nevidim dovod, naco by to malo zmysel
+ * @brief Turn on sensor for sending INT that NFC was activated. Increases consumption. Not necessary, reads via EEPROM anyway
+ * I don't see why this would make sense
  */
 HAL_StatusTypeDef nfc4_On(I2C_HandleTypeDef *hi2c);
 
 /**
- * @brief vypnutie GPO_EN
+ * @brief turn off GPO_EN
  */
 HAL_StatusTypeDef nfc4_Off(I2C_HandleTypeDef *hi2c);
 
 
 /*
- * MailBox Nejde.... tak na tieto dalsie jebem z vysoka....
+ * MailBox doesn't work.... so giving up on these....
  */
 
 HAL_StatusTypeDef nfc4_ProcessMailBox(I2C_HandleTypeDef *hi2c);
