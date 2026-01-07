@@ -82,14 +82,26 @@ void writeLogNL(const char *buf)
 	Uart_Info("\r\n");
 }
 
-void writeLog(const char *format, ...) //
+void writeLogVA(const char *format, va_list argList)
 {
-	va_list argList;
-	va_start(argList, format);
 	static char buf[200];
 
 	vsprintf(buf, format, argList);
 	writeLogNL(buf);
+}
+
+void writeLog(const char *format, ...) //
+{
+	va_list argList;
+	va_start(argList, format);
+	writeLogVA(format, argList);
+	va_end(argList);
+}
+void APP_LOG(int onOff, int vl, const char* format, ...)
+{
+	va_list argList;
+	va_start(argList, format);
+	writeLogVA(format, argList);
 	va_end(argList);
 }
 /*

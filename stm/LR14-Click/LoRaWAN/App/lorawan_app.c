@@ -33,6 +33,7 @@ static LmHandlerCallbacks_t Callbacks = { .GetBatteryLevel = LoRaWAN_Platform_Ge
 NULL, .OnMacProcess = OnMacProcessNotify, .OnJoinRequest = OnJoinRequest, .OnTxData = OnTxData, .OnRxData = OnRxData, .OnClassChange = OnClassChange, .OnBeaconStatusChange =
 		OnBeaconStatus, .OnSysTimeUpdate = NULL, .OnTxPeriodicityChanged = NULL, .OnTxFrameCtrlChanged = NULL, .OnPingSlotPeriodicityChanged = NULL, .OnSystemReset = NULL };
 
+// MT 7.1.2026 zatial neviem, netreba to????
 static LmHandlerParams_t Params = { .ActiveRegion = LORAWAN_REGION, .AdrEnable = LORAWAN_ADR_ENABLE, .IsTxConfirmed = LORAWAN_DEFAULT_CONFIRMED, .TxDatarate = DR_0,
 		.PublicNetworkEnable = true, .DutyCycleEnabled = true, .DataBufferMaxSize = 242, .DataBuffer = NULL, .PingSlotPeriodicity = LORAWAN_CLASSB_PINGSLOT_PERIODICITY };
 
@@ -126,27 +127,28 @@ static void OnJoinRequest(LmHandlerJoinParams_t *params)
 	if (params->Status == LORAMAC_HANDLER_SUCCESS)
 	{
 		s_joined = true;
-		APP_LOG(TS_ON, VLEVEL_M, "LoRaWAN: Joined\r\n");
+		APP_LOG(TS_ON, VLEVEL_M, "LoRaWAN: Joined");
 	}
 	else
 	{
 		s_joined = false;
-		APP_LOG(TS_ON, VLEVEL_M, "LoRaWAN: Join failed, retry...\r\n");
+		APP_LOG(TS_ON, VLEVEL_M, "LoRaWAN: Join failed, retry...");
 		LmHandlerJoin(ACTIVATION_TYPE_OTAA, true);	// MT 7.1.2026
 	}
 }
 
 static void OnTxData(LmHandlerTxParams_t *params)
 {
-	if (!params)
-		return;APP_LOG(TS_ON, VLEVEL_L, "LoRaWAN: TX done DR%d\r\n", params->Datarate);
+	if (params == NULL)
+		return;
+	APP_LOG(TS_ON, VLEVEL_L, "LoRaWAN: TX done DR%d", params->Datarate);
 }
 
 static void OnRxData(LmHandlerAppData_t *appData, LmHandlerRxParams_t *params)
 {
-	if (!appData || !params)
-		return;APP_LOG(TS_ON, VLEVEL_M, "LoRaWAN: RX port=%u len=%u RSSI=%d SNR=%d\r\n",
-			appData->Port, appData->BufferSize, params->Rssi, params->Snr);
+	if (appData == NULL || params == NULL)
+		return;
+	APP_LOG(TS_ON, VLEVEL_M, "LoRaWAN: RX port=%u len=%u RSSI=%d SNR=%d", appData->Port, appData->BufferSize, params->Rssi, params->Snr);
 	if (s_rxCb && appData->Buffer && appData->BufferSize)
 	{
 		s_rxCb(appData->Port, appData->Buffer, appData->BufferSize, params->Rssi, params->Snr);
@@ -156,8 +158,7 @@ static void OnRxData(LmHandlerAppData_t *appData, LmHandlerRxParams_t *params)
 static void OnClassChange(DeviceClass_t newClass)
 {
 	s_currClass = newClass;
-	APP_LOG(TS_ON, VLEVEL_M, "LoRaWAN: Class switched to %c\r\n",
-			(newClass == CLASS_A) ? 'A' : (newClass == CLASS_B) ? 'B' : 'C');
+	APP_LOG(TS_ON, VLEVEL_M, "LoRaWAN: Class switched to %c", (newClass == CLASS_A) ? 'A' : (newClass == CLASS_B) ? 'B' : 'C');
 #if defined(LORAWAN_CLASSB_PINGSLOT_PERIODICITY)
 	if (newClass == CLASS_B)
 	{
@@ -171,14 +172,13 @@ static void OnBeaconStatus(LmHandlerBeaconParams_t *params)
 {
 	if (!params)
 		return;
-	APP_LOG(TS_ON, VLEVEL_L, "LoRaWAN: Beacon state %d\r\n", params->State);
+	APP_LOG(TS_ON, VLEVEL_L, "LoRaWAN: Beacon state %d", params->State);
 }
-
 
 // kompatibila s generatorom
 void MX_LoRaWAN_Init()
 {
-	LoRaWAN_Init(NULL);
+	LoRaWAN_Init(NULL);	// MT 7.1.2026
 }
 
 void MX_LoRaWAN_Process(void)
