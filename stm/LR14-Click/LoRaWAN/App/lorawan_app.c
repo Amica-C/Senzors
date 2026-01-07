@@ -33,9 +33,25 @@ static LmHandlerCallbacks_t Callbacks = { .GetBatteryLevel = LoRaWAN_Platform_Ge
 NULL, .OnMacProcess = OnMacProcessNotify, .OnJoinRequest = OnJoinRequest, .OnTxData = OnTxData, .OnRxData = OnRxData, .OnClassChange = OnClassChange, .OnBeaconStatusChange =
 		OnBeaconStatus, .OnSysTimeUpdate = NULL, .OnTxPeriodicityChanged = NULL, .OnTxFrameCtrlChanged = NULL, .OnPingSlotPeriodicityChanged = NULL, .OnSystemReset = NULL };
 
-// MT 7.1.2026 zatial neviem, netreba to????
-static LmHandlerParams_t Params = { .ActiveRegion = LORAWAN_REGION, .AdrEnable = LORAWAN_ADR_ENABLE, .IsTxConfirmed = LORAWAN_DEFAULT_CONFIRMED, .TxDatarate = DR_0,
-		.PublicNetworkEnable = true, .DutyCycleEnabled = true, .DataBufferMaxSize = 242, .DataBuffer = NULL, .PingSlotPeriodicity = LORAWAN_CLASSB_PINGSLOT_PERIODICITY };
+/**
+ * LoRaWAN handler configuration parameters
+ * These parameters configure the LoRaMac layer after initialization.
+ * Must be passed to LmHandlerConfigure() to apply settings.
+ */
+static LmHandlerParams_t Params = { 
+	.ActiveRegion = LORAWAN_REGION, 
+	.DefaultClass = LORAWAN_DEFAULT_CLASS,
+	.AdrEnable = LORAWAN_ADR_ENABLE, 
+	.IsTxConfirmed = LORAWAN_DEFAULT_CONFIRMED, 
+	.TxDatarate = DR_0,
+	.TxPower = TX_POWER_0,
+	.PublicNetworkEnable = true, 
+	.DutyCycleEnabled = true, 
+	.DataBufferMaxSize = 242, 
+	.DataBuffer = NULL, 
+	.PingSlotPeriodicity = LORAWAN_CLASSB_PINGSLOT_PERIODICITY,
+	.RxBCTimeout = 3000  // 3 seconds timeout for Class B/C downlinks
+};
 
 bool LoRaWAN_SetJoinCredentials(const uint8_t joinEui[8], const uint8_t appKey[16])
 {
@@ -55,6 +71,9 @@ void LoRaWAN_Init(const lorawan_otaa_keys_t *otaa)
 	}
 
 	LmHandlerInit(&Callbacks, APP_VERSION);
+	
+	// Configure LoRaWAN MAC layer parameters
+	LmHandlerConfigure(&Params);
 
 	SecureElementSetDevEui(s_otaa.DevEui);
 	// JoinEUI and AppKey should be set by LoRaWAN_SetJoinCredentials before calling Init
