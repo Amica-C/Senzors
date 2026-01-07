@@ -94,7 +94,7 @@ extern "C" {
 #define REGION_EU868
 /*#define REGION_KR920*/
 /*#define REGION_IN865*/
-#define REGION_US915
+/*#define REGION_US915*/
 /*#define REGION_RU864*/
 
 /*!
@@ -136,7 +136,7 @@ extern "C" {
 /*!
  * @brief Enables/Disables the LoRaWAN Class B (Periodic ping downlink slots + Beacon for synchronization)
  */
-#define LORAMAC_CLASSB_ENABLED                          0
+#define LORAMAC_CLASSB_ENABLED                          1
 
 #if ( LORAMAC_CLASSB_ENABLED == 1 )
 /* CLASS B LSE crystal calibration*/
