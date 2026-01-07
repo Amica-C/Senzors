@@ -1,0 +1,22 @@
+LORAWAN - general discuss
+- how it works
+- what kind of lorawan classes (A/B) exist
+- how to create connect to gateway from my code
+- C/H stm32Cubeide
+
+next:
+include in my code everything, what is necessary for establish of connection to Server - create code
+- I want to only check - the connection is establish and if yes, I want to send to server my buffer
+- maybe I will need to switch from class A to B - also create for me function to process it
+- I will need to download from server the data, not only send, e.g. new firmware - can be class A or it must be done via classB?
+
+so, I don't spend my time with investigate how lorawan works. Therefor I need code, which takes everything about lorawan. I need code for:
+- init of lorawan
+- optional, set LORAWAN_APP_KEY or leave set from Server
+- LORAWAN_DEVICE_EUI, LORAWAN_DEVICE_ADDRESS - define from MCU
+- in main - call for lorawan process
+- check the connection and if is established, I want to send my buffer
+can you create/modify the files from my repository Senzors for my scenario?
+
+In my repository exists LoRaWAN/App and LoRaWAN/Target
+For generate code for me, take these files and modify them by my requests

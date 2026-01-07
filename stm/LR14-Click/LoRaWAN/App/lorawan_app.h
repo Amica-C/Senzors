@@ -8,6 +8,16 @@
 #include "lorawan_keys.h"
 
 /**
+  * @brief  Init Lora Application
+  */
+void MX_LoRaWAN_Init(void);
+
+/**
+  * @brief  Entry Lora Process or scheduling
+  */
+void MX_LoRaWAN_Process(void);
+
+/**
  * @brief Initialize LoRaWAN stack with OTAA credentials
  * @param otaa Pointer to OTAA keys structure, or NULL to use defaults
  */

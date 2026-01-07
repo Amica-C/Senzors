@@ -94,7 +94,7 @@ extern "C" {
 #define REGION_EU868
 /*#define REGION_KR920*/
 /*#define REGION_IN865*/
-#define REGION_US915
+/*#define REGION_US915*/
 /*#define REGION_RU864*/
 
 /*!
@@ -136,7 +136,7 @@ extern "C" {
 /*!
  * @brief Enables/Disables the LoRaWAN Class B (Periodic ping downlink slots + Beacon for synchronization)
  */
-#define LORAMAC_CLASSB_ENABLED                          0
+#define LORAMAC_CLASSB_ENABLED                          1
 
 #if ( LORAMAC_CLASSB_ENABLED == 1 )
 /* CLASS B LSE crystal calibration*/
@@ -189,6 +189,40 @@ extern "C" {
 #endif /* !CRITICAL_SECTION_END */
 
 /* USER CODE BEGIN EM */
+
+#ifndef LORAWAN_REGION
+#define LORAWAN_REGION          LORAMAC_REGION_EU868
+#endif
+
+#ifndef LORAWAN_DEFAULT_CLASS
+#define LORAWAN_DEFAULT_CLASS   CLASS_A
+#endif
+
+#ifndef LORAWAN_USE_OTAA
+#define LORAWAN_USE_OTAA        1
+#endif
+
+#ifndef LORAWAN_DEFAULT_FPORT
+#define LORAWAN_DEFAULT_FPORT   2
+#endif
+
+#ifndef LORAWAN_DEFAULT_CONFIRMED
+#define LORAWAN_DEFAULT_CONFIRMED false
+#endif
+
+#ifndef LORAWAN_CLASSB_PINGSLOT_PERIODICITY
+#define LORAWAN_CLASSB_PINGSLOT_PERIODICITY  3  // every 8s
+#endif
+
+#ifndef LORAWAN_MAX_TX_RETRIES
+#define LORAWAN_MAX_TX_RETRIES  3
+#endif
+
+#ifndef LORAWAN_ADR_ENABLE
+#define LORAWAN_ADR_ENABLE      true
+#endif
+
+
 
 /* USER CODE END EM */
 
