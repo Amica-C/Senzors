@@ -5,6 +5,7 @@
 #include "stm32wlxx_hal.h"
 #include "sys_app.h"
 #include "app_version.h"
+#include "lora_info.h"
 
 static volatile bool s_joined = false;
 static DeviceClass_t s_currClass = LORAWAN_DEFAULT_CLASS;
@@ -69,7 +70,7 @@ void LoRaWAN_Init(const lorawan_otaa_keys_t *otaa)
 	{
 		FillDevEuiFromMcu(s_otaa.DevEui);
 	}
-
+	LoraInfo_Init();
 	LmHandlerInit(&Callbacks, APP_VERSION);
 	
 	// Configure LoRaWAN MAC layer parameters
