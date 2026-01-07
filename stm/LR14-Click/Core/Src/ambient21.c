@@ -23,13 +23,13 @@ typedef enum
 // Global or static variable to track state
 static TSL2591_Gain_t _currentGain = TSL2591_GAIN_MED;
 
-static int8_t _isAmbientSenzor = 0;	// indicator whether sensor is present
+static int8_t _isAmbientSensor = 0;	// indicator whether sensor is present
 
 int8_t ambient_Is(I2C_HandleTypeDef *hi2c, int8_t tryInit) //
 {
-	if (!_isAmbientSenzor && tryInit)
+	if (!_isAmbientSensor && tryInit)
 		ambient_Init(hi2c);
-	return _isAmbientSenzor;
+	return _isAmbientSensor;
 }
 
 HAL_StatusTypeDef ambient_IsOn(I2C_HandleTypeDef *hi2c, uint8_t *onOff)
@@ -37,7 +37,7 @@ HAL_StatusTypeDef ambient_IsOn(I2C_HandleTypeDef *hi2c, uint8_t *onOff)
 	uint8_t data = 0;
 	HAL_StatusTypeDef status = HAL_ERROR;
 
-	if (_isAmbientSenzor)
+	if (_isAmbientSensor)
 	{
 		status = HAL_I2C_Mem_Read(hi2c, AMBIENT_ADDR, TSL2591_COMMAND | REG_ENABLE, I2C_MEMADD_SIZE_8BIT, &data, 1, 100);
 		if (status == HAL_OK)
@@ -52,7 +52,7 @@ HAL_StatusTypeDef ambient_On(I2C_HandleTypeDef *hi2c)
 	HAL_StatusTypeDef status = HAL_ERROR;
 	uint8_t data;
 
-	if (_isAmbientSenzor)
+	if (_isAmbientSensor)
 	{
 		do
 		{
@@ -76,14 +76,14 @@ HAL_StatusTypeDef ambient_On(I2C_HandleTypeDef *hi2c)
 			if (status != HAL_OK)
 				break;
 			status = HAL_OK;
-			if (_isAmbientSenzor)
+			if (_isAmbientSensor)
 			{
 				for (data = 0; data < 4; data++)
 					if (ambient_ReadLux(hi2c, NULL) == HAL_OK)
 						break;	// calibration...., if value obtained, can finish
 			}
 		} while (0);
-		_isAmbientSenzor = (status == HAL_OK);
+		_isAmbientSensor = (status == HAL_OK);
 	}
 	return status;
 }
@@ -93,7 +93,7 @@ HAL_StatusTypeDef ambient_Off(I2C_HandleTypeDef *hi2c)
 	HAL_StatusTypeDef status = HAL_ERROR;
 	uint8_t data;
 
-	if (_isAmbientSenzor)
+	if (_isAmbientSensor)
 		do
 		{
 			// 1. Power on the sensor (Enable register)
@@ -114,7 +114,7 @@ HAL_StatusTypeDef ambient_Init(I2C_HandleTypeDef *hi2c)
 	if (status == HAL_OK)
 		do
 		{
-			_isAmbientSenzor = 1;
+			_isAmbientSensor = 1;
 			// 1. turn on sensor and calibrate
 			if ((status = ambient_On(hi2c)) != HAL_OK)
 				break;
@@ -122,7 +122,7 @@ HAL_StatusTypeDef ambient_Init(I2C_HandleTypeDef *hi2c)
 			if ((status = ambient_Off(hi2c)) != HAL_OK)
 				break;
 		} while (0);
-	_isAmbientSenzor = (status == HAL_OK);
+	_isAmbientSensor = (status == HAL_OK);
 	return status;
 }
 
@@ -171,7 +171,7 @@ HAL_StatusTypeDef ambient_ReadLux(I2C_HandleTypeDef *hi2c, float *luxOut) //
 	uint8_t buffer[4];
 	HAL_StatusTypeDef status = HAL_ERROR;
 
-	if (_isAmbientSenzor) //
+	if (_isAmbientSensor) //
 	{
 		do
 		{

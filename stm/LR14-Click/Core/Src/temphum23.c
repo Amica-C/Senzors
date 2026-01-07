@@ -15,7 +15,7 @@
 #include "temphum23.h"
 
 static uint16_t _tempHumAddr = 0x44;// - must be set via init 0x44; // or 0x45
-static int8_t _isTempHumSenzor = 0;
+static int8_t _isTempHumSensor = 0;
 static int8_t _isOnOff = 0; 	// dummy
 
 tempHum_t _tempHumData = { };
@@ -26,20 +26,20 @@ static HAL_StatusTypeDef tempHum_onOff(I2C_HandleTypeDef *hi2c, uint8_t onOff)
 
 	if (status == HAL_OK)
 		_isOnOff = onOff;
-	_isTempHumSenzor = (status == HAL_OK);
+	_isTempHumSensor = (status == HAL_OK);
 	return status;
 }
 
 int8_t tempHum_Is(I2C_HandleTypeDef *hi2c, int8_t tryInit)//
 {
-	if (!_isTempHumSenzor && tryInit)
+	if (!_isTempHumSensor && tryInit)
 		tempHum_Init(hi2c);
-	return _isTempHumSenzor;
+	return _isTempHumSensor;
 }
 
 HAL_StatusTypeDef tempHum_IsOn(I2C_HandleTypeDef *hi2c, uint8_t *onOff)
 {
-	HAL_StatusTypeDef status = _isTempHumSenzor ? HAL_OK : HAL_ERROR;
+	HAL_StatusTypeDef status = _isTempHumSensor ? HAL_OK : HAL_ERROR;
 
 	if (status == HAL_OK)
 		if (onOff != NULL)
@@ -72,7 +72,7 @@ HAL_StatusTypeDef tempHum_Init(I2C_HandleTypeDef *hi2c) //
 	}
 	*/
 	status = MY_I2C_IsDeviceReady(hi2c, (_tempHumAddr << 1), 2, 2);
-	_isTempHumSenzor = (status == HAL_OK);
+	_isTempHumSensor = (status == HAL_OK);
 	return status;
 }
 
@@ -98,7 +98,7 @@ HAL_StatusTypeDef tempHum_Read(I2C_HandleTypeDef *hi2c) //
 	uint8_t buffer[6];
 	HAL_StatusTypeDef ret = HAL_ERROR;
 
-	if (_isTempHumSenzor) //
+	if (_isTempHumSensor) //
 	{
 		do //
 		{
