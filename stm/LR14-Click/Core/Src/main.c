@@ -19,7 +19,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "i2c.h"
-#include "app_lorawan.h"
+#include "lorawan_app.h"
 #include "spi.h"
 #include "usart.h"
 #include "gpio.h"
