@@ -74,4 +74,19 @@ void LoRaWAN_RegisterRxCallback(lorawan_rx_cb_t cb);
  */
 bool LoRaWAN_SetJoinCredentials(const uint8_t joinEui[8], const uint8_t appKey[16]);
 
+/**
+ * @brief Set transmit power level
+ * @param txPower Transmit power level (TX_POWER_0 to TX_POWER_15, region-specific)
+ *                TX_POWER_0 is maximum power, higher values reduce power
+ * @return 0 on success, negative on error
+ */
+int LoRaWAN_SetTxPower(int8_t txPower);
+
+/**
+ * @brief Get current transmit power level
+ * @param txPower Pointer to store the current transmit power level
+ * @return 0 on success, negative on error
+ */
+int LoRaWAN_GetTxPower(int8_t *txPower);
+
 #endif // LORAWAN_APP_H

@@ -195,6 +195,28 @@ static void OnBeaconStatus(LmHandlerBeaconParams_t *params)
 	APP_LOG(TS_ON, VLEVEL_L, "LoRaWAN: Beacon state %d", params->State);
 }
 
+int LoRaWAN_SetTxPower(int8_t txPower)
+{
+	if (LmHandlerSetTxPower(txPower) == LORAMAC_HANDLER_SUCCESS)
+	{
+		return 0;
+	}
+	return -1;
+}
+
+int LoRaWAN_GetTxPower(int8_t *txPower)
+{
+	if (txPower == NULL)
+	{
+		return -1;
+	}
+	if (LmHandlerGetTxPower(txPower) == LORAMAC_HANDLER_SUCCESS)
+	{
+		return 0;
+	}
+	return -1;
+}
+
 // kompatibila s generatorom
 void MX_LoRaWAN_Init()
 {
