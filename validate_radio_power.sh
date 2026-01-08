@@ -1,4 +1,7 @@
 #!/bin/bash
+set -e  # Exit on any error
+set -u  # Exit on undefined variables
+
 # Validation script for Radio Transmit Power Control feature
 
 echo "=== Radio Transmit Power Control - Implementation Validation ==="
@@ -74,3 +77,5 @@ echo "  - Documentation file created"
 echo "  - TX_POWER constants available"
 echo ""
 echo "The radio transmit power control feature is ready to use!"
+
+exit 0
