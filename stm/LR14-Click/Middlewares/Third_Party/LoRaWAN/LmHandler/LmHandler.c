@@ -93,7 +93,6 @@ static CommissioningParams_t CommissioningParams =
     .DevAddr = 0,     /* Automatically filed from secure-element */
     .NetworkId = LORAWAN_NETWORK_ID,
 };
-
 #if (defined( LORAMAC_VERSION ) && ( LORAMAC_VERSION == 0x01000300 ))
 /*!
  * LoRaWAN compliance tests handler parameters
@@ -381,7 +380,7 @@ LmHandlerErrorStatus_t LmHandlerDeInit( void )
         return LORAMAC_HANDLER_BUSY_ERROR;
     }
 }
-
+void Error_Handler(void);
 LmHandlerErrorStatus_t LmHandlerConfigure( LmHandlerParams_t *handlerParams )
 {
     MibRequestConfirm_t mibReq;
@@ -401,6 +400,7 @@ LmHandlerErrorStatus_t LmHandlerConfigure( LmHandlerParams_t *handlerParams )
     if( 0U == ( ( 1 << ( LmHandlerParams.ActiveRegion ) ) & ( loraInfo->Region ) ) )
     {
         MW_LOG( TS_ON, VLEVEL_ALWAYS, "error: Region is not defined in the MW: set lorawan_conf.h accordingly\r\n" );
+        Error_Handler();	// MT 7.1.2026 ci?
         while( 1 ) {} /* error: Region is not defined in the MW */
     }
 
