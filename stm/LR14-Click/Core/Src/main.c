@@ -274,7 +274,7 @@ int main(void)
 	// TX_POWER_0 = maximum power (region-specific, typically +14-22 dBm)
 	// TX_POWER_1 to TX_POWER_15 = reduced power levels
 	// Uncomment the following lines to set custom TX power:
-	/*
+	/**/
 	int result = LoRaWAN_SetTxPower(TX_POWER_0);  // Set maximum power
 	writeLog("Radio TX power set: %d", result);
 	
@@ -284,7 +284,7 @@ int main(void)
 	if (result == 0) {
 		writeLog("Current TX power level: %d", (int)currentPower);
 	}
-	*/
+
 
 	/*
 	 // example of write - overwrite in EEPROM
