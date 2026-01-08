@@ -270,6 +270,22 @@ int main(void)
 	status = sps30_Init(&hi2c2);
 	writeLog((status == HAL_OK) ? "sps30 senzor: Init OK" : "sps30 senzor: Init failed.");
 
+	// Example: Control radio transmit power
+	// TX_POWER_0 = maximum power (region-specific, typically +14-22 dBm)
+	// TX_POWER_1 to TX_POWER_15 = reduced power levels
+	// Uncomment the following lines to set custom TX power:
+	/*
+	int result = LoRaWAN_SetTxPower(TX_POWER_0);  // Set maximum power
+	writeLog("Radio TX power set: %d", result);
+	
+	// To read current TX power:
+	int8_t currentPower;
+	result = LoRaWAN_GetTxPower(&currentPower);
+	if (result == 0) {
+		writeLog("Current TX power level: %d", (int)currentPower);
+	}
+	*/
+
 	/*
 	 // example of write - overwrite in EEPROM
 	 if (status == HAL_OK)
