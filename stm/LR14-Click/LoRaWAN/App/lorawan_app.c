@@ -207,7 +207,9 @@ int LoRaWAN_SetTxPower(int8_t txPower)
 int LoRaWAN_GetTxPower(int8_t *txPower)
 {
 	if (txPower == NULL)
+	{
 		return -1;
+	}
 	if (LmHandlerGetTxPower(txPower) == LORAMAC_HANDLER_SUCCESS)
 	{
 		return 0;
