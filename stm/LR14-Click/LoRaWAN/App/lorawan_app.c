@@ -8,6 +8,7 @@
 #include "lora_info.h"
 
 static volatile bool s_joined = false;
+static volatile bool s_initialized = false;
 static DeviceClass_t s_currClass = LORAWAN_DEFAULT_CLASS;
 static lorawan_rx_cb_t s_rxCb = NULL;
 static lorawan_otaa_keys_t s_otaa = { 0 };
@@ -65,6 +66,7 @@ bool LoRaWAN_SetJoinCredentials(const uint8_t joinEui[8], const uint8_t appKey[1
 
 void LoRaWAN_Init(const lorawan_otaa_keys_t *otaa)
 {
+	s_initialized = true;
 	s_otaa = otaa ? *otaa : LoRaWAN_DefaultOtaa();
 	if (s_otaa.DevEuiFromMcuUid)
 	{
@@ -97,6 +99,22 @@ void LoRaWAN_Process(void)
 bool LoRaWAN_IsJoined(void)
 {
 	return s_joined;
+}
+
+const char* LoRaWAN_GetConnectionStatus(void)
+{
+	if (!s_initialized)
+	{
+		return "Not initialized";
+	}
+	else if (s_joined)
+	{
+		return "Joined";
+	}
+	else
+	{
+		return "Joining...";
+	}
 }
 
 int LoRaWAN_Send(const uint8_t *buf, uint8_t len, uint8_t fport, bool confirmed)
