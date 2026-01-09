@@ -231,7 +231,16 @@ int main(void)
 
 	/* Initialize all configured peripherals */
 	MX_GPIO_Init();
+	
+	// Initialize LoRaWAN
+	// NOTE: This automatically starts the join process (connection to gateway)
+	// The module will send join requests and wait for network server acceptance
+	// You do NOT need to explicitly call a connect function
+	// Use LoRaWAN_IsJoined() to check if connection is established
 	MX_LoRaWAN_Init();
+	writeLog("LoRaWAN initialized - automatic join process started");
+	writeLog("LoRaWAN connection status: %s", LoRaWAN_GetConnectionStatus());
+	
 	MX_USART1_UART_Init();
 	MX_I2C2_Init();
 	MX_SPI1_Init();
@@ -469,24 +478,36 @@ int main(void)
 			if (_sensBuffer[0])
 			{
 				writeLogNL(_sensBuffer);
+<<<<<<< HEAD
 
 				// Send sensor data via LoRaWAN if joined
 				if (LoRaWAN_IsJoined())
 				{
 					// Send buffer with confirmation (confirmed message)
 					int result = LoRaWAN_Send((uint8_t*) _sensBuffer, strlen(_sensBuffer), 2, true);
+=======
+				
+				// Check LoRaWAN connection status and send sensor data
+				const char* connectionStatus = LoRaWAN_GetConnectionStatus();
+				
+				if (LoRaWAN_IsJoined())
+				{
+					// Connection established - send buffer with confirmation (confirmed message)
+					int result = LoRaWAN_Send((uint8_t*)_sensBuffer, strlen(_sensBuffer), 2, true);
+>>>>>>> 8d58d87f1a9aa5dd9087093ddec575d951871e40
 					if (result == 0)
 					{
-						writeLog("LoRaWAN: Data sent (confirmed)");
+						writeLog("LoRaWAN: Data sent (confirmed) - Status: %s", connectionStatus);
 					}
 					else
 					{
-						writeLog("LoRaWAN: Send failed, error=%d", result);
+						writeLog("LoRaWAN: Send failed, error=%d - Status: %s", result, connectionStatus);
 					}
 				}
 				else
 				{
-					writeLog("LoRaWAN: Not joined yet, skipping send");
+					// Not joined yet - show current status
+					writeLog("LoRaWAN: Cannot send - Status: %s", connectionStatus);
 				}
 			}
 			sleeper_Next(&_readData);	// next here, because sensor may have response
