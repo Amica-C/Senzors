@@ -29,6 +29,7 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
+#include <inttypes.h>
 #include "utils/utils.h"
 #include "temphum23.h"
 #include "ambient21.h"
@@ -97,7 +98,7 @@ void writeLog(const char *format, ...) //
 	writeLogVA(format, argList);
 	va_end(argList);
 }
-void APP_LOG(int onOff, int vl, const char* format, ...)
+void APP_LOG(int onOff, int vl, const char *format, ...)
 {
 	va_list argList;
 	va_start(argList, format);
@@ -275,16 +276,15 @@ int main(void)
 	// TX_POWER_1 to TX_POWER_15 = reduced power levels
 	// Uncomment the following lines to set custom TX power:
 	/**/
-	int result = LoRaWAN_SetTxPower(TX_POWER_0);  // Set maximum power
-	writeLog("Radio TX power set: %d", result);
-	
+//	int result = LoRaWAN_SetTxPower(TX_POWER_0);  // Set maximum power
+//	writeLog("Radio TX power set: %d", result);
 	// To read current TX power:
-	int8_t currentPower;
-	result = LoRaWAN_GetTxPower(&currentPower);
-	if (result == 0) {
-		writeLog("Current TX power level: %d", (int)currentPower);
+	int8_t currentPower = -1;
+	int result = LoRaWAN_GetTxPower(&currentPower);
+	if (result == 0)
+	{
+		writeLog("Current TX power level: %d", (int) currentPower);
 	}
-
 
 	/*
 	 // example of write - overwrite in EEPROM
@@ -403,10 +403,17 @@ int main(void)
 				//status = flash_WritePage(&_flash, 0x400, (const uint8_t*)mm, len);
 				//writeLog("flash write error:%d", (int)status);
 
-				char bufRead[20] = { };
-				status = flash_Read(&_flash, 0x400, (uint8_t*) bufRead, sizeof(bufRead) - 1);
-				if (status == HAL_OK)
-					sensBuffer_Add("flash read:%s ", bufRead);
+				//char bufRead[20] = { };
+				//status = flash_Read(&_flash, 0x400, (uint8_t*) bufRead, sizeof(bufRead) - 1);
+				//if (status == HAL_OK)
+				//	sensBuffer_Add("flash read:%s ", bufRead);
+				char buf1[20] = { }, buf2[20] = { };
+				sprintf(buf1, "tick:%" PRIu32, HAL_GetTick());
+				status = flash_WritePage(&_flash, 0x400, (const uint8_t*) buf1, strlen(buf1) + 1);
+				writeLog("flash wr data:'%s' error:%d", buf1, (int) status);
+				// reading test
+				status = flash_Read(&_flash, 0x400, (uint8_t*) buf2, sizeof(buf2) - 1);
+				writeLog("flash rd data:'%s' error:%d", buf2, (int) status);
 			}
 
 			if (nfc4_Is(&hi2c2, _tryInit))
@@ -462,12 +469,12 @@ int main(void)
 			if (_sensBuffer[0])
 			{
 				writeLogNL(_sensBuffer);
-				
+
 				// Send sensor data via LoRaWAN if joined
 				if (LoRaWAN_IsJoined())
 				{
 					// Send buffer with confirmation (confirmed message)
-					int result = LoRaWAN_Send((uint8_t*)_sensBuffer, strlen(_sensBuffer), 2, true);
+					int result = LoRaWAN_Send((uint8_t*) _sensBuffer, strlen(_sensBuffer), 2, true);
 					if (result == 0)
 					{
 						writeLog("LoRaWAN: Data sent (confirmed)");
