@@ -19,20 +19,74 @@ void MX_LoRaWAN_Process(void);
 
 /**
  * @brief Initialize LoRaWAN stack with OTAA credentials
+ * 
+ * This function initializes the LoRaWAN stack and **automatically initiates** 
+ * the join procedure (connection to gateway) using OTAA (Over-The-Air Activation).
+ * 
+ * **IMPORTANT**: LoRaWAN does NOT support "scanning for gateways". Instead:
+ * - The device sends join requests on configured channels
+ * - Any gateway in range that receives the request forwards it to the network server
+ * - If credentials are valid, the network server responds via a gateway
+ * - The join process is automatic and will retry on failure
+ * 
+ * You do NOT need to explicitly call a "connect" function - this happens automatically
+ * when you call LoRaWAN_Init(). The join status can be checked using LoRaWAN_IsJoined().
+ * 
  * @param otaa Pointer to OTAA keys structure, or NULL to use defaults
+ * 
+ * @note Before calling Init, set credentials using LoRaWAN_SetJoinCredentials()
+ * @note DevEUI is automatically derived from MCU unique ID if DevEuiFromMcuUid is true
+ * @note Join attempts continue automatically until successful
  */
 void LoRaWAN_Init(const lorawan_otaa_keys_t* otaa);
 
 /**
  * @brief Process LoRaWAN stack events (call regularly in main loop)
+ * 
+ * This function MUST be called regularly (typically in the main while loop) to:
+ * - Handle join request/response processing
+ * - Process uplink/downlink messages
+ * - Manage MAC commands and timing
+ * - Handle retransmissions and duty cycle
  */
 void LoRaWAN_Process(void);
 
 /**
  * @brief Check if device has joined the network
- * @return true if joined, false otherwise
+ * 
+ * After LoRaWAN_Init() is called, the join procedure runs automatically in the background.
+ * Use this function to check if the join has completed successfully.
+ * 
+ * @return true if device has successfully joined and can send data, false otherwise
+ * 
+ * @note You must call LoRaWAN_Process() regularly for join procedure to progress
+ * @note Only attempt to send data when this returns true
  */
 bool LoRaWAN_IsJoined(void);
+
+/**
+ * @brief Get connection status information
+ * 
+ * Provides detailed information about the LoRaWAN connection status.
+ * 
+ * **Understanding LoRaWAN Gateway Connection:**
+ * - LoRaWAN does NOT provide a way to "detect" or "scan" for specific gateways
+ * - The device sends join requests on all configured channels
+ * - ANY gateway in range that receives the request forwards it to the network server
+ * - If accepted by the network server, a join accept message is sent back via any gateway
+ * - Multiple gateways may receive your messages (this improves reliability)
+ * - You cannot and do not need to check "which gateway" or "if a gateway is in range"
+ * - Simply monitor the join status - if joined, communication with the network is established
+ * 
+ * @return String describing current connection status:
+ *         - "Not initialized" - LoRaWAN_Init() not yet called
+ *         - "Joining..." - Join procedure in progress, waiting for network response
+ *         - "Joined" - Successfully joined network, ready to send/receive
+ * 
+ * @note This function helps you understand what's happening during the automatic join process
+ * @note Call LoRaWAN_Process() regularly to allow join process to progress
+ */
+const char* LoRaWAN_GetConnectionStatus(void);
 
 /**
  * @brief Send uplink data

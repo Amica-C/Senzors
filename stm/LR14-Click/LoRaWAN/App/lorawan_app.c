@@ -8,6 +8,7 @@
 #include "lora_info.h"
 
 static volatile bool s_joined = false;
+static volatile bool s_initialized = false;
 static DeviceClass_t s_currClass = LORAWAN_DEFAULT_CLASS;
 static lorawan_rx_cb_t s_rxCb = NULL;
 static lorawan_otaa_keys_t s_otaa = { 0 };
@@ -65,6 +66,7 @@ bool LoRaWAN_SetJoinCredentials(const uint8_t joinEui[8], const uint8_t appKey[1
 
 void LoRaWAN_Init(const lorawan_otaa_keys_t *otaa)
 {
+	s_initialized = true;
 	s_otaa = otaa ? *otaa : LoRaWAN_DefaultOtaa();
 	if (s_otaa.DevEuiFromMcuUid)
 	{
@@ -80,7 +82,9 @@ void LoRaWAN_Init(const lorawan_otaa_keys_t *otaa)
 	// JoinEUI and AppKey should be set by LoRaWAN_SetJoinCredentials before calling Init
 
 #if (LORAWAN_USE_OTAA == 1)
-	LmHandlerJoin(ACTIVATION_TYPE_OTAA, true);	// MT 7.1.2026
+	// Initiate OTAA join procedure - this happens automatically
+	// The module will send join requests and retry until successful
+	LmHandlerJoin(ACTIVATION_TYPE_OTAA, true);
 #else
     // Not used, but kept for completeness
     s_joined = true;
@@ -99,6 +103,22 @@ bool LoRaWAN_IsJoined(void)
 	return s_joined;
 }
 
+const char* LoRaWAN_GetConnectionStatus(void)
+{
+	if (!s_initialized)
+	{
+		return "Not initialized";
+	}
+	else if (s_joined)
+	{
+		return "Joined";
+	}
+	else
+	{
+		return "Joining...";
+	}
+}
+
 int LoRaWAN_Send(const uint8_t *buf, uint8_t len, uint8_t fport, bool confirmed)
 {
 	if (!s_joined)
@@ -109,7 +129,8 @@ int LoRaWAN_Send(const uint8_t *buf, uint8_t len, uint8_t fport, bool confirmed)
 	LmHandlerAppData_t appData = { .Buffer = (uint8_t*) buf, .BufferSize = len, .Port = (fport == 0) ? LORAWAN_DEFAULT_FPORT : fport };
 	LmHandlerMsgTypes_t msgType = confirmed ? LORAMAC_HANDLER_CONFIRMED_MSG : LORAMAC_HANDLER_UNCONFIRMED_MSG;
 
-	if (LmHandlerSend(&appData, msgType, false) == LORAMAC_HANDLER_SUCCESS)	// // MT 7.1.2026 dal som false
+	// allowDelayedTx set to false to respect duty cycle limitations
+	if (LmHandlerSend(&appData, msgType, false) == LORAMAC_HANDLER_SUCCESS)
 	{
 		return 0;
 	}
@@ -153,7 +174,8 @@ static void OnJoinRequest(LmHandlerJoinParams_t *params)
 	{
 		s_joined = false;
 		APP_LOG(TS_ON, VLEVEL_M, "LoRaWAN: Join failed, retry...");
-		LmHandlerJoin(ACTIVATION_TYPE_OTAA, true);	// MT 7.1.2026
+		// Automatically retry join on failure
+		LmHandlerJoin(ACTIVATION_TYPE_OTAA, true);
 	}
 }
 
@@ -182,8 +204,8 @@ static void OnClassChange(DeviceClass_t newClass)
 #if defined(LORAWAN_CLASSB_PINGSLOT_PERIODICITY)
 	if (newClass == CLASS_B)
 	{
-		// Class B ping slot configuration
-		LmHandlerSetPingPeriodicity(LORAWAN_CLASSB_PINGSLOT_PERIODICITY); // MT 7.1.2026
+		// Configure Class B ping slot periodicity for beacon downlinks
+		LmHandlerSetPingPeriodicity(LORAWAN_CLASSB_PINGSLOT_PERIODICITY);
 	}
 #endif
 }
@@ -220,7 +242,8 @@ int LoRaWAN_GetTxPower(int8_t *txPower)
 // kompatibila s generatorom
 void MX_LoRaWAN_Init()
 {
-	LoRaWAN_Init(NULL);	// MT 7.1.2026
+	// Initialize with default OTAA configuration
+	LoRaWAN_Init(NULL);
 }
 
 void MX_LoRaWAN_Process(void)
