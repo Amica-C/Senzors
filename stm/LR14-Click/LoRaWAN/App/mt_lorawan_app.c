@@ -1,5 +1,5 @@
+#include <mt_lorawan_app.h>
 #include <string.h>
-#include "lorawan_app.h"
 #include "secure-element.h"
 #include "lorawan_platform.h"
 #include "stm32wlxx_hal.h"
@@ -64,7 +64,7 @@ bool LoRaWAN_SetJoinCredentials(const uint8_t joinEui[8], const uint8_t appKey[1
 	return true;
 }
 
-void LoRaWAN_Init(const lorawan_otaa_keys_t *otaa)
+void LoRaWAN_InitMT(const lorawan_otaa_keys_t *otaa)
 {
 	s_initialized = true;
 	s_otaa = otaa ? *otaa : LoRaWAN_DefaultOtaa();
@@ -93,7 +93,7 @@ void LoRaWAN_Init(const lorawan_otaa_keys_t *otaa)
 	LoRaWAN_RequestClass(LORAWAN_DEFAULT_CLASS);
 }
 
-void LoRaWAN_Process(void)
+void LoRaWAN_ProcessMT(void)
 {
 	LmHandlerProcess();
 }
@@ -239,14 +239,4 @@ int LoRaWAN_GetTxPower(int8_t *txPower)
 	return -1;
 }
 
-// kompatibila s generatorom
-void MX_LoRaWAN_Init()
-{
-	// Initialize with default OTAA configuration
-	LoRaWAN_Init(NULL);
-}
 
-void MX_LoRaWAN_Process(void)
-{
-	LoRaWAN_Process();
-}

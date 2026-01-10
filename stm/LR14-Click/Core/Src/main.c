@@ -19,7 +19,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "i2c.h"
-#include "lorawan_app.h"
+#include "app_lorawan.h"
 #include "spi.h"
 #include "usart.h"
 #include "gpio.h"
@@ -38,6 +38,7 @@
 #include "barometer8.h"
 #include "sps30.h"
 #include "scd41.h"
+#include "mt_lorawan_app.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -501,7 +502,6 @@ int main(void)
 						writeLog("LoRaWAN: Cannot send - Status: %s", connectionStatus);
 					}
 				}
-				sleeper_Next(&_readData);	// next here, because sensor may have response
 			}
 			/*
 			 if (scd41_Is(&hi2c2, _tryInit))
@@ -518,14 +518,15 @@ int main(void)
 				nfc4_ProcessMailBox(&hi2c2);
 				//nfc4_WriteMailBoxNDEF(&hi2c2, "picus");
 			}
+			sleeper_Next(&_readData);	// next here, because sensor may have response
 		}
 		if (uart_data_ready)		//
 		{
 			writeLog("from:%s!", (const char*) uart_req_buf);
 			Uart_NextReceving();		// a pokracujeme v citani portu, data su nachystane v uart_req_buf
 		}
-		/* USER CODE END 3 */
 	}
+	/* USER CODE END 3 */
 }
 
 /**

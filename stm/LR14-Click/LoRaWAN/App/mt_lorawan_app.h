@@ -1,11 +1,11 @@
 #ifndef LORAWAN_APP_H
 #define LORAWAN_APP_H
 
+#include <mt_lorawan_keys.h>
 #include <stdint.h>
 #include <stdbool.h>
 #include "LmHandler.h"
 #include "lorawan_conf.h"
-#include "lorawan_keys.h"
 
 /**
   * @brief  Init Lora Application
@@ -38,7 +38,7 @@ void MX_LoRaWAN_Process(void);
  * @note DevEUI is automatically derived from MCU unique ID if DevEuiFromMcuUid is true
  * @note Join attempts continue automatically until successful
  */
-void LoRaWAN_Init(const lorawan_otaa_keys_t* otaa);
+void LoRaWAN_InitMT(const lorawan_otaa_keys_t* otaa);
 
 /**
  * @brief Process LoRaWAN stack events (call regularly in main loop)
@@ -49,7 +49,7 @@ void LoRaWAN_Init(const lorawan_otaa_keys_t* otaa);
  * - Manage MAC commands and timing
  * - Handle retransmissions and duty cycle
  */
-void LoRaWAN_Process(void);
+void LoRaWAN_ProcessMT(void);
 
 /**
  * @brief Check if device has joined the network
