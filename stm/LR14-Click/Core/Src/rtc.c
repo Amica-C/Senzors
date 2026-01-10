@@ -139,7 +139,8 @@ HAL_StatusTypeDef RTC_SetWakeupTimer_10Minutes(void)
   
   // Configure wakeup timer for 10 minutes (600 seconds)
   // Using CK_SPRE (1 Hz clock from RTC)
-  // Counter value = 600 - 1 = 599
+  // Counter value = desired_seconds - 1 = 600 - 1 = 599
+  // (The counter triggers when it reaches 0, so we count from 599 down to 0 = 600 ticks)
   if (HAL_RTCEx_SetWakeUpTimer_IT(&hrtc, 599, RTC_WAKEUPCLOCK_CK_SPRE_16BITS) != HAL_OK)
   {
     return HAL_ERROR;

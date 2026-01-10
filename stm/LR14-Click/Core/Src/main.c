@@ -543,8 +543,10 @@ int main(void)
 				status = Uart_StartReceving(&huart1);
 				writeLog("UART restarted: %d", (int) status);
 				
-				// Clear the stop mode flag
+				// Clear the stop mode flags
 				_GoToStop = 0;
+				// Note: _WokenFromStop can be used by application to perform
+				// specific actions after wakeup if needed
 				_WokenFromStop = 0;
 			}
 			else
