@@ -105,6 +105,10 @@ void PWR_EnterStopMode(void)
   // Enter Stop mode
   HAL_PWR_EnterSTOPMode(PWR_LOWPOWERREGULATOR_ON, PWR_STOPENTRY_WFI);
   
+  // After wakeup, execution continues here
+  // Call exit function to restore system
+  PWR_ExitStopMode();
+  
   /* USER CODE END EnterStopMode_1 */
 }
 

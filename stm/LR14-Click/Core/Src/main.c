@@ -531,13 +531,17 @@ int main(void)
 				// Small delay to ensure log is transmitted
 				HAL_Delay(100);
 				
-				// Enter stop mode (peripherals will be deinitialized inside)
+				// Enter stop mode
+				// The device will wake up after 10 minutes via RTC wakeup timer
+				// PWR_EnterStopMode will deinitialize peripherals, enter stop mode,
+				// and then reinitialize everything after wakeup
 				PWR_EnterStopMode();
 				
-				// After wakeup, PWR_ExitStopMode() is called automatically
-				// Peripherals are reinitialized there
-				
 				writeLog("Woken from stop mode!");
+				
+				// Restart UART reception after waking up
+				status = Uart_StartReceving(&huart1);
+				writeLog("UART restarted: %d", (int) status);
 				
 				// Clear the stop mode flag
 				_GoToStop = 0;

@@ -67,6 +67,25 @@ void Error_Handler(void);
 
 /* USER CODE BEGIN Private defines */
 
+/**
+ * @brief Control variable for entering stop mode
+ * 
+ * Set this variable to 1 to request the device to enter stop mode.
+ * The device will:
+ * - Check if LoRaWAN stack is ready (not busy)
+ * - Turn off sensors
+ * - Deinitialize I2C, SPI, and UART peripherals
+ * - Enter STOP mode with low power regulator
+ * - Wake up after 10 minutes via RTC wakeup timer
+ * - Reinitialize all peripherals and resume operation
+ * 
+ * Set to 0 for normal operation (default).
+ * 
+ * Example usage:
+ *   extern volatile int8_t _GoToStop;
+ *   _GoToStop = 1;  // Request stop mode entry
+ */
+
 /* USER CODE END Private defines */
 
 #ifdef __cplusplus
