@@ -23,12 +23,10 @@
 #include "stm32_lpm_if.h"
 
 /* USER CODE BEGIN Includes */
+#include "main.h"
 #include "i2c.h"
 #include "spi.h"
 #include "usart.h"
-
-// Forward declaration of SystemClock_Config from main.c
-extern void SystemClock_Config(void);
 
 /* USER CODE END Includes */
 

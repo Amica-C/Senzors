@@ -51,8 +51,15 @@ extern "C" {
 
 /* Exported functions prototypes ---------------------------------------------*/
 void Error_Handler(void);
+void SystemClock_Config(void);
 
 /* USER CODE BEGIN EFP */
+
+/**
+ * @brief External variables for stop mode control
+ */
+extern volatile int8_t _GoToStop;
+extern volatile uint8_t _WokenFromStop;
 
 /* USER CODE END EFP */
 
