@@ -46,7 +46,8 @@ void MX_RTC_Init(void);
  * @brief Configure RTC wakeup timer for 10 minutes
  * 
  * This function configures the RTC wakeup timer to generate an interrupt after 10 minutes.
- * The timer uses the LSI clock (32768 Hz) with a divider to achieve the desired period.
+ * The timer uses RTC_WAKEUPCLOCK_CK_SPRE_16BITS which provides a 1 Hz clock (ck_spre) 
+ * derived from the RTC prescalers. The counter value is set to 599 (600 seconds - 1).
  * 
  * @return HAL_OK on success, HAL_ERROR on failure
  */
