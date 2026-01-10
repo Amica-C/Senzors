@@ -20,6 +20,7 @@
 #include "main.h"
 #include "i2c.h"
 #include "app_lorawan.h"
+#include "rtc.h"
 #include "spi.h"
 #include "usart.h"
 #include "gpio.h"
@@ -39,6 +40,7 @@
 #include "sps30.h"
 #include "scd41.h"
 #include "mt_lorawan_app.h"
+//#include "stm32wlxx_hal_lptim.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -204,47 +206,41 @@ void sensorsOnOff(uint8_t onOff)
 /* USER CODE END 0 */
 
 /**
- * @brief  The application entry point.
- * @retval int
- */
+  * @brief  The application entry point.
+  * @retval int
+  */
 int main(void)
 {
 
-	/* USER CODE BEGIN 1 */
+  /* USER CODE BEGIN 1 */
 	HAL_StatusTypeDef status;
-	/* USER CODE END 1 */
+  /* USER CODE END 1 */
 
-	/* MCU Configuration--------------------------------------------------------*/
+  /* MCU Configuration--------------------------------------------------------*/
 
-	/* Reset of all peripherals, Initializes the Flash interface and the Systick. */
-	HAL_Init();
+  /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
+  HAL_Init();
 
-	/* USER CODE BEGIN Init */
+  /* USER CODE BEGIN Init */
 
-	/* USER CODE END Init */
+  /* USER CODE END Init */
 
-	/* Configure the system clock */
-	SystemClock_Config();
+  /* Configure the system clock */
+  SystemClock_Config();
 
-	/* USER CODE BEGIN SysInit */
+  /* USER CODE BEGIN SysInit */
 
-	/* USER CODE END SysInit */
+  /* USER CODE END SysInit */
 
-	/* Initialize all configured peripherals */
-	MX_GPIO_Init();
-
-	// Initialize LoRaWAN
-	// NOTE: This automatically starts the join process (connection to gateway)
-	// The module will send join requests and wait for network server acceptance
-	// You do NOT need to explicitly call a connect function
-	// Use LoRaWAN_IsJoined() to check if connection is established
-	MX_LoRaWAN_Init();
-
-	MX_USART1_UART_Init();
-	MX_I2C2_Init();
-	MX_SPI1_Init();
-	MX_USART2_UART_Init();
-	/* USER CODE BEGIN 2 */
+  /* Initialize all configured peripherals */
+  MX_GPIO_Init();
+  MX_LoRaWAN_Init();
+  MX_USART1_UART_Init();
+  MX_I2C2_Init();
+  MX_SPI1_Init();
+  MX_USART2_UART_Init();
+  MX_RTC_Init();
+  /* USER CODE BEGIN 2 */
 	sleeper_Init(&_readData, 3000);
 	sleeper_Init(&_sensorsOnOff, 30000);
 
@@ -294,58 +290,50 @@ int main(void)
 		writeLog("Current TX power level: %d", (int) currentPower);
 	}
 
+	// Start LPTIM1 in interrupt mode
+	// 1024 is the period (matches what you set in CubeMX)
 	/*
-	 // example of write - overwrite in EEPROM
-	 if (status == HAL_OK)
-	 {
-	 uint8_t dat;
-	 // uint16_t addr, uint8_t *pData, uint16_t len
-	 status = nfc4_ReadEEPROM(&hi2c2, 0, &dat, 1);
-	 writeLog((status == HAL_OK) ? ("nfc4 tag read: OK") : "nfc4 tag read: Failed.");
-	 if (status == HAL_OK)
-	 {
-	 writeLog("....dat:%d", (int) dat);
-	 dat = !dat;
-	 status = nfc4_WriteEEPROM(&hi2c2, 0, &dat, 1);
-	 writeLog((status == HAL_OK) ? ("nfc4 tag write: OK") : "nfc4 tag write: Failed.");
-	 }
-	 }*/
+	 * Timeout=(Period+1)xPrescaler / ClockSourceFrequency
+	 *
+	 * Period = Timeout*ClockSourceFrequency/Prescaler -1;
 
-	//nfc4_SetRFMgmt(&hi2c1, 1);
-	// example of write and read to flash
-	/*
-	 if (flash_Is(&_flash, _tryInit))
-	 {
-	 char* mm="zapis flash";
-	 int len = strlen(mm)+1;
-	 status = flash_WritePage(&_flash, 0x400, (const uint8_t*)mm, len);
-	 writeLog("flash write error:%d", (int)status);
+	 * 2. Setting for 1 Minute (60 seconds)
 
-	 //char bufRead[20] = { };
-	 //status = flash_Read(&_flash, 0x400, (uint8_t*) bufRead, sizeof(bufRead) - 1);
-	 //writeLog("flash read error:%d, data:%s", (int) status, bufRead);
+	* This fits within a single hardware cycle.
 
-	 }// */
+    	* Prescaler: 128
+    	* LSI freq: 32768
 
-	/* USER CODE END 2 */
+    	Required Ticks: (60×32768)/128​=15360
 
-	/* Infinite loop */
-	/* USER CODE BEGIN WHILE */
-	/*
-	 tempHum_On(&hi2c2);
-	 ambient_On(&hi2c2);
-	 barometer_On(&hi2c2);
-	 nfc4_On(&hi2c2);
-	 scd41_On(&hi2c2);
-	 sps30_On(&hi2c2);
+    	// This is the HAL "weak" function you are overriding
+		void HAL_LPTIM_CompareMatchCallback(LPTIM_HandleTypeDef *hlptim)
+		{
+			if (hlptim->Instance == LPTIM1)
+			{
+				int stop;
+				stop = 0;
+			}
+		}
+
+
+	if (HAL_LPTIM_TimeOut_Start_IT(&hlptim1, 1536, 1536) != HAL_OK)
+	{
+		Error_Handler();
+	}
 	 */
+  /* USER CODE END 2 */
+
+  /* Infinite loop */
+  /* USER CODE BEGIN WHILE */
+
 	sensorsOnOff(0);	// pri starte vsetko ok
 	while (1) //
 	{
-		/* USER CODE END WHILE */
-		MX_LoRaWAN_Process();
+    /* USER CODE END WHILE */
+    MX_LoRaWAN_Process();
 
-		/* USER CODE BEGIN 3 */
+    /* USER CODE BEGIN 3 */
 
 		if (sleeper_IsElapsed(&_sensorsOnOff))
 		{
@@ -406,15 +394,6 @@ int main(void)
 
 			if (flash_Is(&_flash, _tryInit))
 			{
-				//char* mm="kokotko";
-				//int len = strlen(mm)+1;
-				//status = flash_WritePage(&_flash, 0x400, (const uint8_t*)mm, len);
-				//writeLog("flash write error:%d", (int)status);
-
-				//char bufRead[20] = { };
-				//status = flash_Read(&_flash, 0x400, (uint8_t*) bufRead, sizeof(bufRead) - 1);
-				//if (status == HAL_OK)
-				//	sensBuffer_Add("flash read:%s ", bufRead);
 				char buf1[20] = { }, buf2[20] = { };
 				sprintf(buf1, "tick:%" PRIu32, HAL_GetTick());
 				status = flash_WritePage(&_flash, 0x400, (const uint8_t*) buf1, strlen(buf1) + 1);
@@ -526,52 +505,56 @@ int main(void)
 			Uart_NextReceving();		// a pokracujeme v citani portu, data su nachystane v uart_req_buf
 		}
 	}
-	/* USER CODE END 3 */
+  /* USER CODE END 3 */
 }
 
 /**
- * @brief System Clock Configuration
- * @retval None
- */
+  * @brief System Clock Configuration
+  * @retval None
+  */
 void SystemClock_Config(void)
 {
-	RCC_OscInitTypeDef RCC_OscInitStruct = { 0 };
-	RCC_ClkInitTypeDef RCC_ClkInitStruct = { 0 };
+  RCC_OscInitTypeDef RCC_OscInitStruct = {0};
+  RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
 
-	/** Configure the main internal regulator output voltage
-	 */
-	__HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE1);
+  /** Configure the main internal regulator output voltage
+  */
+  __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE1);
 
-	/** Initializes the CPU, AHB and APB buses clocks
-	 */
-	RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI;
-	RCC_OscInitStruct.HSIState = RCC_HSI_ON;
-	RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
-	RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
-	RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSI;
-	RCC_OscInitStruct.PLL.PLLM = RCC_PLLM_DIV1;
-	RCC_OscInitStruct.PLL.PLLN = 6;
-	RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV2;
-	RCC_OscInitStruct.PLL.PLLR = RCC_PLLR_DIV2;
-	RCC_OscInitStruct.PLL.PLLQ = RCC_PLLQ_DIV2;
-	if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
-	{
-		Error_Handler();
-	}
+  /** Initializes the CPU, AHB and APB buses clocks
+  */
+  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI|RCC_OSCILLATORTYPE_LSI;
+  RCC_OscInitStruct.HSIState = RCC_HSI_ON;
+  RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
+  RCC_OscInitStruct.LSIDiv = RCC_LSI_DIV1;
+  RCC_OscInitStruct.LSIState = RCC_LSI_ON;
+  RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
+  RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSI;
+  RCC_OscInitStruct.PLL.PLLM = RCC_PLLM_DIV1;
+  RCC_OscInitStruct.PLL.PLLN = 6;
+  RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV2;
+  RCC_OscInitStruct.PLL.PLLR = RCC_PLLR_DIV2;
+  RCC_OscInitStruct.PLL.PLLQ = RCC_PLLQ_DIV2;
+  if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
+  {
+    Error_Handler();
+  }
 
-	/** Configure the SYSCLKSource, HCLK, PCLK1 and PCLK2 clocks dividers
-	 */
-	RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK3 | RCC_CLOCKTYPE_HCLK | RCC_CLOCKTYPE_SYSCLK | RCC_CLOCKTYPE_PCLK1 | RCC_CLOCKTYPE_PCLK2;
-	RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
-	RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
-	RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV1;
-	RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;
-	RCC_ClkInitStruct.AHBCLK3Divider = RCC_SYSCLK_DIV1;
+  /** Configure the SYSCLKSource, HCLK, PCLK1 and PCLK2 clocks dividers
+  */
+  RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK3|RCC_CLOCKTYPE_HCLK
+                              |RCC_CLOCKTYPE_SYSCLK|RCC_CLOCKTYPE_PCLK1
+                              |RCC_CLOCKTYPE_PCLK2;
+  RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
+  RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
+  RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV1;
+  RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;
+  RCC_ClkInitStruct.AHBCLK3Divider = RCC_SYSCLK_DIV1;
 
-	if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_2) != HAL_OK)
-	{
-		Error_Handler();
-	}
+  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_2) != HAL_OK)
+  {
+    Error_Handler();
+  }
 }
 
 /* USER CODE BEGIN 4 */
@@ -579,12 +562,12 @@ void SystemClock_Config(void)
 /* USER CODE END 4 */
 
 /**
- * @brief  This function is executed in case of error occurrence.
- * @retval None
- */
+  * @brief  This function is executed in case of error occurrence.
+  * @retval None
+  */
 void Error_Handler(void)
 {
-	/* USER CODE BEGIN Error_Handler_Debug */
+  /* USER CODE BEGIN Error_Handler_Debug */
 	/* User can add his own implementation to report the HAL error return state */
 	//__disable_irq();
 	while (1)
@@ -592,7 +575,7 @@ void Error_Handler(void)
 		HAL_GPIO_TogglePin(USER_LED_GPIO_Port, USER_LED_Pin);
 		HAL_Delay(100);
 	}
-	/* USER CODE END Error_Handler_Debug */
+  /* USER CODE END Error_Handler_Debug */
 }
 #ifdef USE_FULL_ASSERT
 /**
