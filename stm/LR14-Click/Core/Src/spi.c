@@ -118,4 +118,12 @@ void HAL_SPI_MspDeInit(SPI_HandleTypeDef* spiHandle)
 
 /* USER CODE BEGIN 1 */
 
+/**
+ * @brief Deinitialize SPI1 peripheral for low power mode
+ */
+void MX_SPI1_DeInit(void)
+{
+  HAL_SPI_DeInit(&hspi1);
+}
+
 /* USER CODE END 1 */

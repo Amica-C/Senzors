@@ -305,4 +305,13 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) //
 	}
 }
 
+/**
+ * @brief Deinitialize UART peripherals for low power mode
+ */
+void MX_USART_DeInit(void)
+{
+  HAL_UART_DeInit(&huart1);
+  HAL_UART_DeInit(&huart2);
+}
+
 /* USER CODE END 1 */

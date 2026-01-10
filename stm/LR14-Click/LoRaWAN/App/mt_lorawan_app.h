@@ -143,4 +143,14 @@ int LoRaWAN_SetTxPower(int8_t txPower);
  */
 int LoRaWAN_GetTxPower(int8_t *txPower);
 
+/**
+ * @brief Check if LoRaWAN stack is ready to enter low power stop mode
+ * 
+ * Before entering stop mode, the LoRaWAN stack must not have any pending operations.
+ * This function checks if the stack is idle and ready for the device to enter stop mode.
+ * 
+ * @return true if ready for stop mode, false if busy
+ */
+bool LoRaWAN_IsReadyForStopMode(void);
+
 #endif // LORAWAN_APP_H

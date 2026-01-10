@@ -61,6 +61,11 @@ HAL_DMA_StateTypeDef Uart_StartReceving(UART_HandleTypeDef *uart);
  */
 HAL_DMA_StateTypeDef Uart_NextReceving();
 
+/**
+ * @brief Deinitialize UART peripherals for low power mode
+ */
+void MX_USART_DeInit(void);
+
 /* USER CODE END Prototypes */
 
 #ifdef __cplusplus
