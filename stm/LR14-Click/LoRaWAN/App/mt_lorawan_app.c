@@ -239,4 +239,11 @@ int LoRaWAN_GetTxPower(int8_t *txPower)
 	return -1;
 }
 
+bool LoRaWAN_IsReadyForStopMode(void)
+{
+	// Check if LoRaWAN MAC is busy with any operations
+	// If not busy, it's safe to enter stop mode
+	return !LmHandlerIsBusy();
+}
+
 

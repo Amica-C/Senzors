@@ -23,6 +23,10 @@
 #include "stm32_lpm_if.h"
 
 /* USER CODE BEGIN Includes */
+#include "main.h"
+#include "i2c.h"
+#include "spi.h"
+#include "usart.h"
 
 /* USER CODE END Includes */
 
@@ -90,14 +94,35 @@ void PWR_ExitOffMode(void)
 void PWR_EnterStopMode(void)
 {
   /* USER CODE BEGIN EnterStopMode_1 */
-
+  
+  // Deinitialize peripherals before entering stop mode
+  MX_I2C2_DeInit();
+  MX_SPI1_DeInit();
+  MX_USART_DeInit();
+  
+  // Enter Stop mode
+  HAL_PWR_EnterSTOPMode(PWR_LOWPOWERREGULATOR_ON, PWR_STOPENTRY_WFI);
+  
+  // After wakeup, execution continues here
+  // Call exit function to restore system
+  PWR_ExitStopMode();
+  
   /* USER CODE END EnterStopMode_1 */
 }
 
 void PWR_ExitStopMode(void)
 {
   /* USER CODE BEGIN ExitStopMode_1 */
-
+  
+  // After wakeup from stop mode, reconfigure system clock
+  SystemClock_Config();
+  
+  // Reinitialize peripherals after exiting stop mode
+  MX_I2C2_Init();
+  MX_SPI1_Init();
+  MX_USART1_UART_Init();
+  MX_USART2_UART_Init();
+  
   /* USER CODE END ExitStopMode_1 */
 }
 

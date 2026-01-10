@@ -41,7 +41,10 @@ extern I2C_HandleTypeDef hi2c2;
 void MX_I2C2_Init(void);
 
 /* USER CODE BEGIN Prototypes */
-
+/**
+ * @brief Deinitialize I2C2 peripheral for low power mode
+ */
+void MX_I2C2_DeInit(void);
 /* USER CODE END Prototypes */
 
 #ifdef __cplusplus

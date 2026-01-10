@@ -122,4 +122,31 @@ void HAL_RTC_MspDeInit(RTC_HandleTypeDef* rtcHandle)
 
 /* USER CODE BEGIN 1 */
 
+/**
+ * @brief Configure RTC wakeup timer for 10 minutes
+ * 
+ * Calculation for 10 minutes (600 seconds):
+ * - Using RTC_WAKEUPCLOCK_CK_SPRE_16BITS which provides a 1 Hz clock
+ * - This clock is derived from the RTC prescalers (ck_spre = 1 Hz)
+ * - Counter value for 10 minutes: 600 - 1 = 599
+ * - Maximum counter value is 0xFFFF (65535), which allows up to ~18.2 hours
+ * - So 10 minutes (600 seconds) is well within limits
+ */
+HAL_StatusTypeDef RTC_SetWakeupTimer_10Minutes(void)
+{
+  // Stop the wakeup timer first if it's running
+  HAL_RTCEx_DeactivateWakeUpTimer(&hrtc);
+  
+  // Configure wakeup timer for 10 minutes (600 seconds)
+  // Using CK_SPRE (1 Hz clock from RTC)
+  // Counter value = desired_seconds - 1 = 600 - 1 = 599
+  // (The counter triggers when it reaches 0, so we count from 599 down to 0 = 600 ticks)
+  if (HAL_RTCEx_SetWakeUpTimer_IT(&hrtc, 599, RTC_WAKEUPCLOCK_CK_SPRE_16BITS) != HAL_OK)
+  {
+    return HAL_ERROR;
+  }
+  
+  return HAL_OK;
+}
+
 /* USER CODE END 1 */

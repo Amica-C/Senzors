@@ -40,6 +40,7 @@
 #include "sps30.h"
 #include "scd41.h"
 #include "mt_lorawan_app.h"
+#include "stm32_lpm_if.h"
 //#include "stm32wlxx_hal_lptim.h"
 /* USER CODE END Includes */
 
@@ -69,6 +70,15 @@ flashCS_t _flash = { .csPort = SPI1_CS_GPIO_Port, .csPin = SPI1_CS_Pin, .spi = &
 volatile uint8_t nfc_interrupt_flag = 0;
 char _sensBuffer[1024] = { };	// sensor buffer
 int8_t _tryInit = 1;			// xxx_Is - pokus o volanie init
+
+// Stop mode control variable
+// Set to 1 to enter stop mode after checking conditions
+// Set to 0 to stay in normal operation
+volatile int8_t _GoToStop = 0;
+
+// Flag to track if we just woke up from stop mode
+volatile uint8_t _WokenFromStop = 0;
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -322,6 +332,11 @@ int main(void)
 		Error_Handler();
 	}
 	 */
+	
+	// Configure RTC wakeup timer for 10 minutes
+	status = RTC_SetWakeupTimer_10Minutes();
+	writeLog((status == HAL_OK) ? "RTC wakeup timer: Init OK (10 min)" : "RTC wakeup timer: Init failed.");
+	
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -499,6 +514,47 @@ int main(void)
 			}
 			sleeper_Next(&_readData);	// next here, because sensor may have response
 		}
+		
+		// Check if we should enter stop mode
+		if (_GoToStop)
+		{
+			writeLog("Stop mode requested, checking conditions...");
+			
+			// Check if LoRaWAN is ready for stop mode
+			if (LoRaWAN_IsReadyForStopMode())
+			{
+				writeLog("LoRaWAN ready, entering stop mode for 10 minutes...");
+				
+				// Turn off sensors before stop mode
+				sensorsOnOff(0);
+				
+				// Small delay to ensure log is transmitted
+				HAL_Delay(100);
+				
+				// Enter stop mode
+				// The device will wake up after 10 minutes via RTC wakeup timer
+				// PWR_EnterStopMode will deinitialize peripherals, enter stop mode,
+				// and then reinitialize everything after wakeup
+				PWR_EnterStopMode();
+				
+				writeLog("Woken from stop mode!");
+				
+				// Restart UART reception after waking up
+				status = Uart_StartReceving(&huart1);
+				writeLog("UART restarted: %d", (int) status);
+				
+				// Clear the stop mode flags
+				_GoToStop = 0;
+				// Note: _WokenFromStop can be used by application to perform
+				// specific actions after wakeup if needed
+				_WokenFromStop = 0;
+			}
+			else
+			{
+				writeLog("LoRaWAN busy, cannot enter stop mode yet");
+			}
+		}
+		
 		if (uart_data_ready)		//
 		{
 			writeLog("from:%s!", (const char*) uart_req_buf);
