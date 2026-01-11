@@ -57,7 +57,7 @@ void MX_RTC_Init(void)
 
   /** Enable the WakeUp
   */
-  if (HAL_RTCEx_SetWakeUpTimer_IT(&hrtc, 0, RTC_WAKEUPCLOCK_RTCCLK_DIV16, 0) != HAL_OK)
+  if (HAL_RTCEx_SetWakeUpTimer_IT(&hrtc, 0, RTC_WAKEUPCLOCK_CK_SPRE_16BITS, 0) != HAL_OK)
   {
     Error_Handler();
   }
@@ -141,7 +141,8 @@ HAL_StatusTypeDef RTC_SetWakeupTimer_10Minutes(void)
   // Using CK_SPRE (1 Hz clock from RTC)
   // Counter value = desired_seconds - 1 = 600 - 1 = 599
   // (The counter triggers when it reaches 0, so we count from 599 down to 0 = 600 ticks)
-  if (HAL_RTCEx_SetWakeUpTimer_IT(&hrtc, 599, RTC_WAKEUPCLOCK_CK_SPRE_16BITS) != HAL_OK)
+  uint32_t wakeUp = 59;//599
+  if (HAL_RTCEx_SetWakeUpTimer_IT(&hrtc, wakeUp, RTC_WAKEUPCLOCK_CK_SPRE_16BITS, 0) != HAL_OK)	// MT 10.1.2026 dal som 0
   {
     return HAL_ERROR;
   }

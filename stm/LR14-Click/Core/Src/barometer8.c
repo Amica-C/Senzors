@@ -15,8 +15,7 @@
 #define REG_WHO_AM_I         0x0F
 #define REG_CTRL_REG1        0x10
 #define REG_PRESS_OUT_XL     0x28
-#define REG_TEMP_OUT_L       0x2B
-
+#define REG_PRESS_OFFSET     0x1A	// MT 10.1.2026 factory offset
 // Device ID
 #define ILPS22QS_ID          0xB4
 
@@ -52,7 +51,6 @@ HAL_StatusTypeDef barometer_IsOn(I2C_HandleTypeDef *hi2c, uint8_t *onOff)
 	if (_isBarometer)
 	{
 		// reading CTRL_REG1
-		// 0x00 = 00000000 -> ODR: 50Hz & ON, AVG: 0 Low-pass filter disabled
 		uint8_t ctrl1 = 0x00;
 		status = HAL_I2C_Mem_Read(hi2c, ILPS22QS_I2C_ADDR, REG_CTRL_REG1, 1, &ctrl1, 1, 100);
 		if (status == HAL_OK)
@@ -67,7 +65,12 @@ HAL_StatusTypeDef barometer_On(I2C_HandleTypeDef *hi2c)
 {
 	// Configure CTRL_REG1
 	// 0x50 = 01010000 -> ODR: 50Hz & ON, AVG: 0 Low-pass filter disabled
-	return barometer_onOff(hi2c, 0x50);
+	/*
+	 *   7  6    5    4     3    2   1    0
+         0 ODR3 ODR2 ODR1 ODR0 AVG2 AVG1 AVG0
+	 */
+	const uint8_t val = 0b00011010;
+	return barometer_onOff(hi2c, val);
 }
 
 HAL_StatusTypeDef barometer_Off(I2C_HandleTypeDef *hi2c)
@@ -121,6 +124,11 @@ HAL_StatusTypeDef barometer_Read(I2C_HandleTypeDef *hi2c)
 				status = HAL_TIMEOUT;
 				break;
 			}
+
+			if ((status = HAL_I2C_Mem_Read(hi2c, ILPS22QS_I2C_ADDR, REG_PRESS_OFFSET, 1, raw_data, 2, 100)) != HAL_OK)
+				break;
+			uint32_t factoryOffset = (uint32_t)raw_data[1] << 16 | (uint32_t)raw_data[0];
+
 
 			// Read Pressure (3 bytes) and Temperature (2 bytes) starting from PRESS_OUT_XL
 			// Using auto-increment feature of the sensor

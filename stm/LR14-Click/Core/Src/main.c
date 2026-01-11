@@ -118,19 +118,7 @@ void APP_LOG(int onOff, int vl, const char *format, ...)
 	writeLogVA(format, argList);
 	va_end(argList);
 }
-/*
- void sendData(const char *format, ...) //
- {
- va_list argList;
- va_start(argList, format);
- static char buf[2048];
 
- vsprintf(buf, format, argList);
- strcat(buf, "\r\n");
- Uart_Info(buf);
- va_end(argList);
- }
- */
 void I2C_Scan(I2C_HandleTypeDef *hi2c) //
 {
 	HAL_StatusTypeDef res;
@@ -192,6 +180,9 @@ void sensorsOnOff(uint8_t onOff)
 {
 	if (onOff)
 	{
+		MX_I2C2_Init();	// reinit
+		HAL_Delay(500);
+
 		writeLog("Sensors:on");
 		tempHum_On(&hi2c2);
 		ambient_On(&hi2c2);
@@ -209,6 +200,8 @@ void sensorsOnOff(uint8_t onOff)
 		nfc4_Off(&hi2c2);
 		scd41_Off(&hi2c2);
 		sps30_Off(&hi2c2);
+
+		MX_I2C2_DeInit();	// deinit - low power
 	}
 
 }
@@ -216,41 +209,41 @@ void sensorsOnOff(uint8_t onOff)
 /* USER CODE END 0 */
 
 /**
-  * @brief  The application entry point.
-  * @retval int
-  */
+ * @brief  The application entry point.
+ * @retval int
+ */
 int main(void)
 {
 
-  /* USER CODE BEGIN 1 */
+	/* USER CODE BEGIN 1 */
 	HAL_StatusTypeDef status;
-  /* USER CODE END 1 */
+	/* USER CODE END 1 */
 
-  /* MCU Configuration--------------------------------------------------------*/
+	/* MCU Configuration--------------------------------------------------------*/
 
-  /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
-  HAL_Init();
+	/* Reset of all peripherals, Initializes the Flash interface and the Systick. */
+	HAL_Init();
 
-  /* USER CODE BEGIN Init */
+	/* USER CODE BEGIN Init */
 
-  /* USER CODE END Init */
+	/* USER CODE END Init */
 
-  /* Configure the system clock */
-  SystemClock_Config();
+	/* Configure the system clock */
+	SystemClock_Config();
 
-  /* USER CODE BEGIN SysInit */
+	/* USER CODE BEGIN SysInit */
 
-  /* USER CODE END SysInit */
+	/* USER CODE END SysInit */
 
-  /* Initialize all configured peripherals */
-  MX_GPIO_Init();
-  MX_LoRaWAN_Init();
-  MX_USART1_UART_Init();
-  MX_I2C2_Init();
-  MX_SPI1_Init();
-  MX_USART2_UART_Init();
-  MX_RTC_Init();
-  /* USER CODE BEGIN 2 */
+	/* Initialize all configured peripherals */
+	MX_GPIO_Init();
+	MX_LoRaWAN_Init();
+	MX_USART1_UART_Init();
+	MX_I2C2_Init();
+	MX_SPI1_Init();
+	MX_USART2_UART_Init();
+	MX_RTC_Init();
+	/* USER CODE BEGIN 2 */
 	sleeper_Init(&_readData, 3000);
 	sleeper_Init(&_sensorsOnOff, 30000);
 
@@ -309,52 +302,50 @@ int main(void)
 
 	 * 2. Setting for 1 Minute (60 seconds)
 
-	* This fits within a single hardware cycle.
+	 * This fits within a single hardware cycle.
 
-    	* Prescaler: 128
-    	* LSI freq: 32768
+	 * Prescaler: 128
+	 * LSI freq: 32768
 
-    	Required Ticks: (60×32768)/128​=15360
+	 Required Ticks: (60×32768)/128​=15360
 
-    	// This is the HAL "weak" function you are overriding
-		void HAL_LPTIM_CompareMatchCallback(LPTIM_HandleTypeDef *hlptim)
-		{
-			if (hlptim->Instance == LPTIM1)
-			{
-				int stop;
-				stop = 0;
-			}
-		}
+	 // This is the HAL "weak" function you are overriding
+	 void HAL_LPTIM_CompareMatchCallback(LPTIM_HandleTypeDef *hlptim)
+	 {
+	 if (hlptim->Instance == LPTIM1)
+	 {
+	 int stop;
+	 stop = 0;
+	 }
+	 }
 
 
-	if (HAL_LPTIM_TimeOut_Start_IT(&hlptim1, 1536, 1536) != HAL_OK)
-	{
-		Error_Handler();
-	}
+	 if (HAL_LPTIM_TimeOut_Start_IT(&hlptim1, 1536, 1536) != HAL_OK)
+	 {
+	 Error_Handler();
+	 }
 	 */
-	
-	// Configure RTC wakeup timer for 10 minutes
-	status = RTC_SetWakeupTimer_10Minutes();
-	writeLog((status == HAL_OK) ? "RTC wakeup timer: Init OK (10 min)" : "RTC wakeup timer: Init failed.");
-	
-  /* USER CODE END 2 */
 
-  /* Infinite loop */
-  /* USER CODE BEGIN WHILE */
+	/* USER CODE END 2 */
+
+	/* Infinite loop */
+	/* USER CODE BEGIN WHILE */
 
 	sensorsOnOff(0);	// pri starte vsetko ok
 	while (1) //
 	{
-    /* USER CODE END WHILE */
-    MX_LoRaWAN_Process();
+		/* USER CODE END WHILE */
+		MX_LoRaWAN_Process();
 
-    /* USER CODE BEGIN 3 */
+		/* USER CODE BEGIN 3 */
 
 		if (sleeper_IsElapsed(&_sensorsOnOff))
 		{
 			_isSensorOn = !_isSensorOn;
 			sensorsOnOff(_isSensorOn);
 			sleeper_Next(&_sensorsOnOff);
+			if (!_isSensorOn)
+				_GoToStop = 1;
 		}
 
 		if (sleeper_IsElapsed(&_readData))
@@ -441,7 +432,7 @@ int main(void)
 						//sensBuffer_Add("scd41 busy ");
 					break;
 					default:
-						sensBuffer_Add("scd41 error ");
+						sensBuffer_Add("scd41 error:%d ", (int) status);
 					break;
 				}
 			}
@@ -463,7 +454,7 @@ int main(void)
 						//sensBuffer_Add("sps30 busy ");
 					break;
 					default:
-						sensBuffer_Add("sps30 error ");
+						sensBuffer_Add("sps30 error:%d ", (int) status);
 					break;
 				}
 			}
@@ -471,30 +462,26 @@ int main(void)
 			if (_sensBuffer[0])
 			{
 				writeLogNL(_sensBuffer);
-				// Send sensor data via LoRaWAN if joined
+				// Check LoRaWAN connection status and send sensor data
+				const char *connectionStatus = LoRaWAN_GetConnectionStatus();
+
 				if (LoRaWAN_IsJoined())
 				{
-					// Check LoRaWAN connection status and send sensor data
-					const char *connectionStatus = LoRaWAN_GetConnectionStatus();
-
-					if (LoRaWAN_IsJoined())
+					// Connection established - send buffer with confirmation (confirmed message)
+					int result = LoRaWAN_Send((uint8_t*) _sensBuffer, strlen(_sensBuffer), 2, true);
+					if (result == 0)
 					{
-						// Connection established - send buffer with confirmation (confirmed message)
-						int result = LoRaWAN_Send((uint8_t*) _sensBuffer, strlen(_sensBuffer), 2, true);
-						if (result == 0)
-						{
-							writeLog("LoRaWAN: Data sent (confirmed) - Status: %s", connectionStatus);
-						}
-						else
-						{
-							writeLog("LoRaWAN: Send failed, error=%d - Status: %s", result, connectionStatus);
-						}
+						writeLog("LoRaWAN: Data sent (confirmed) - Status: %s", connectionStatus);
 					}
 					else
 					{
-						// Not joined yet - show current status
-						writeLog("LoRaWAN: Cannot send - Status: %s", connectionStatus);
+						writeLog("LoRaWAN: Send failed, error=%d - Status: %s", result, connectionStatus);
 					}
+				}
+				else
+				{
+					// Not joined yet - show current status
+					writeLog("LoRaWAN: Cannot send - Status: %s", connectionStatus);
 				}
 			}
 			/*
@@ -514,35 +501,39 @@ int main(void)
 			}
 			sleeper_Next(&_readData);	// next here, because sensor may have response
 		}
-		
+
 		// Check if we should enter stop mode
 		if (_GoToStop)
 		{
 			writeLog("Stop mode requested, checking conditions...");
-			
+
 			// Check if LoRaWAN is ready for stop mode
-			if (LoRaWAN_IsReadyForStopMode())
+			if (1 || LoRaWAN_IsReadyForStopMode())
 			{
 				writeLog("LoRaWAN ready, entering stop mode for 10 minutes...");
-				
+
 				// Turn off sensors before stop mode
 				sensorsOnOff(0);
-				
+
+				// Configure RTC wakeup timer for 10 minutes
+				status = RTC_SetWakeupTimer_10Minutes();
+				writeLog((status == HAL_OK) ? "RTC wakeup timer: Init OK (10 min)" : "RTC wakeup timer: Init failed.");
+
 				// Small delay to ensure log is transmitted
-				HAL_Delay(100);
-				
+				HAL_Delay(1000);
+
 				// Enter stop mode
 				// The device will wake up after 10 minutes via RTC wakeup timer
 				// PWR_EnterStopMode will deinitialize peripherals, enter stop mode,
 				// and then reinitialize everything after wakeup
 				PWR_EnterStopMode();
-				
+
 				writeLog("Woken from stop mode!");
-				
+
 				// Restart UART reception after waking up
-				status = Uart_StartReceving(&huart1);
-				writeLog("UART restarted: %d", (int) status);
-				
+				//status = Uart_StartReceving(&huart1);
+				//writeLog("UART restarted: %d", (int) status);
+
 				// Clear the stop mode flags
 				_GoToStop = 0;
 				// Note: _WokenFromStop can be used by application to perform
@@ -554,63 +545,61 @@ int main(void)
 				writeLog("LoRaWAN busy, cannot enter stop mode yet");
 			}
 		}
-		
+
 		if (uart_data_ready)		//
 		{
 			writeLog("from:%s!", (const char*) uart_req_buf);
 			Uart_NextReceving();		// a pokracujeme v citani portu, data su nachystane v uart_req_buf
 		}
 	}
-  /* USER CODE END 3 */
+	/* USER CODE END 3 */
 }
 
 /**
-  * @brief System Clock Configuration
-  * @retval None
-  */
+ * @brief System Clock Configuration
+ * @retval None
+ */
 void SystemClock_Config(void)
 {
-  RCC_OscInitTypeDef RCC_OscInitStruct = {0};
-  RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
+	RCC_OscInitTypeDef RCC_OscInitStruct = { 0 };
+	RCC_ClkInitTypeDef RCC_ClkInitStruct = { 0 };
 
-  /** Configure the main internal regulator output voltage
-  */
-  __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE1);
+	/** Configure the main internal regulator output voltage
+	 */
+	__HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE1);
 
-  /** Initializes the CPU, AHB and APB buses clocks
-  */
-  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI|RCC_OSCILLATORTYPE_LSI;
-  RCC_OscInitStruct.HSIState = RCC_HSI_ON;
-  RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
-  RCC_OscInitStruct.LSIDiv = RCC_LSI_DIV1;
-  RCC_OscInitStruct.LSIState = RCC_LSI_ON;
-  RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
-  RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSI;
-  RCC_OscInitStruct.PLL.PLLM = RCC_PLLM_DIV1;
-  RCC_OscInitStruct.PLL.PLLN = 6;
-  RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV2;
-  RCC_OscInitStruct.PLL.PLLR = RCC_PLLR_DIV2;
-  RCC_OscInitStruct.PLL.PLLQ = RCC_PLLQ_DIV2;
-  if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
-  {
-    Error_Handler();
-  }
+	/** Initializes the CPU, AHB and APB buses clocks
+	 */
+	RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI | RCC_OSCILLATORTYPE_LSI;
+	RCC_OscInitStruct.HSIState = RCC_HSI_ON;
+	RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
+	RCC_OscInitStruct.LSIDiv = RCC_LSI_DIV1;
+	RCC_OscInitStruct.LSIState = RCC_LSI_ON;
+	RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
+	RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSI;
+	RCC_OscInitStruct.PLL.PLLM = RCC_PLLM_DIV1;
+	RCC_OscInitStruct.PLL.PLLN = 6;
+	RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV2;
+	RCC_OscInitStruct.PLL.PLLR = RCC_PLLR_DIV2;
+	RCC_OscInitStruct.PLL.PLLQ = RCC_PLLQ_DIV2;
+	if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
+	{
+		Error_Handler();
+	}
 
-  /** Configure the SYSCLKSource, HCLK, PCLK1 and PCLK2 clocks dividers
-  */
-  RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK3|RCC_CLOCKTYPE_HCLK
-                              |RCC_CLOCKTYPE_SYSCLK|RCC_CLOCKTYPE_PCLK1
-                              |RCC_CLOCKTYPE_PCLK2;
-  RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
-  RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
-  RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV1;
-  RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;
-  RCC_ClkInitStruct.AHBCLK3Divider = RCC_SYSCLK_DIV1;
+	/** Configure the SYSCLKSource, HCLK, PCLK1 and PCLK2 clocks dividers
+	 */
+	RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK3 | RCC_CLOCKTYPE_HCLK | RCC_CLOCKTYPE_SYSCLK | RCC_CLOCKTYPE_PCLK1 | RCC_CLOCKTYPE_PCLK2;
+	RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
+	RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
+	RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV1;
+	RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;
+	RCC_ClkInitStruct.AHBCLK3Divider = RCC_SYSCLK_DIV1;
 
-  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_2) != HAL_OK)
-  {
-    Error_Handler();
-  }
+	if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_2) != HAL_OK)
+	{
+		Error_Handler();
+	}
 }
 
 /* USER CODE BEGIN 4 */
@@ -618,12 +607,12 @@ void SystemClock_Config(void)
 /* USER CODE END 4 */
 
 /**
-  * @brief  This function is executed in case of error occurrence.
-  * @retval None
-  */
+ * @brief  This function is executed in case of error occurrence.
+ * @retval None
+ */
 void Error_Handler(void)
 {
-  /* USER CODE BEGIN Error_Handler_Debug */
+	/* USER CODE BEGIN Error_Handler_Debug */
 	/* User can add his own implementation to report the HAL error return state */
 	//__disable_irq();
 	while (1)
@@ -631,7 +620,7 @@ void Error_Handler(void)
 		HAL_GPIO_TogglePin(USER_LED_GPIO_Port, USER_LED_Pin);
 		HAL_Delay(100);
 	}
-  /* USER CODE END Error_Handler_Debug */
+	/* USER CODE END Error_Handler_Debug */
 }
 #ifdef USE_FULL_ASSERT
 /**

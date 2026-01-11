@@ -24,9 +24,9 @@
 
 /* USER CODE BEGIN Includes */
 #include "main.h"
-#include "i2c.h"
-#include "spi.h"
-#include "usart.h"
+//#include "i2c.h" // MT 10.1.2026 is in SensorOFF/ON
+#include "spi.h" // MT 10.1.2026 this not
+//#include "usart.h"
 
 /* USER CODE END Includes */
 
@@ -96,9 +96,9 @@ void PWR_EnterStopMode(void)
   /* USER CODE BEGIN EnterStopMode_1 */
   
   // Deinitialize peripherals before entering stop mode
-  MX_I2C2_DeInit();
+  //MX_I2C2_DeInit();	// MT 10.1.2026 is in SensorOFF
   MX_SPI1_DeInit();
-  MX_USART_DeInit();
+  //MX_USART_DeInit(); // MT 10.1.2026 this not, no consumption of power
   
   // Enter Stop mode
   HAL_PWR_EnterSTOPMode(PWR_LOWPOWERREGULATOR_ON, PWR_STOPENTRY_WFI);
@@ -118,10 +118,10 @@ void PWR_ExitStopMode(void)
   SystemClock_Config();
   
   // Reinitialize peripherals after exiting stop mode
-  MX_I2C2_Init();
+  //MX_I2C2_Init();	// MT 10.1.2026 is in SensorON
   MX_SPI1_Init();
-  MX_USART1_UART_Init();
-  MX_USART2_UART_Init();
+  //MX_USART1_UART_Init(); // MT 10.1.2026 this not
+  //MX_USART2_UART_Init();
   
   /* USER CODE END ExitStopMode_1 */
 }
