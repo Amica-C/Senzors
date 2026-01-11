@@ -246,4 +246,47 @@ bool LoRaWAN_IsReadyForStopMode(void)
 	return !LmHandlerIsBusy();
 }
 
+void LoRaWAN_DisconnectForStopMode(void)
+{
+	// Halt the LoRaWAN stack before entering stop mode
+	// This stops all ongoing operations including join process
+	LmHandlerHalt();
+	
+	// Clear the joined flag since we're halting the connection
+	s_joined = false;
+	
+	APP_LOG(TS_ON, VLEVEL_M, "LoRaWAN: Disconnected for stop mode");
+}
+
+void LoRaWAN_ReconnectAfterStopMode(void)
+{
+	// Re-initialize DevEUI if it was derived from MCU UID
+	if (s_otaa.DevEuiFromMcuUid)
+	{
+		FillDevEuiFromMcu(s_otaa.DevEui);
+	}
+	
+	// Re-initialize LoRa info module
+	LoraInfo_Init();
+	
+	// Re-initialize the LoRaWAN stack after waking from stop mode
+	LmHandlerInit(&Callbacks, APP_VERSION);
+	
+	// Reconfigure LoRaWAN MAC layer parameters
+	LmHandlerConfigure(&Params);
+	
+	// Restore DevEUI
+	SecureElementSetDevEui(s_otaa.DevEui);
+	// Note: JoinEUI and AppKey should already be set in secure element
+	// from the initial LoRaWAN_SetJoinCredentials() call
+	
+	// Initiate OTAA join procedure to reconnect to the network
+	LmHandlerJoin(ACTIVATION_TYPE_OTAA, true);
+	
+	// Request the configured device class
+	LoRaWAN_RequestClass(LORAWAN_DEFAULT_CLASS);
+	
+	APP_LOG(TS_ON, VLEVEL_M, "LoRaWAN: Reconnecting after stop mode");
+}
+
 

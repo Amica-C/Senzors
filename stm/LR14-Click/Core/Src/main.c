@@ -510,7 +510,9 @@ int main(void)
 			// Check if LoRaWAN is ready for stop mode
 			if (!LoRaWAN_IsJoined() || LoRaWAN_IsReadyForStopMode())
 			{
-				writeLog("LoRaWAN ready, entering stop mode for 10 minutes...");
+				// Disconnect LoRaWAN before entering stop mode
+				// This works even if the device is still joining
+				LoRaWAN_DisconnectForStopMode();
 
 				// Turn off sensors before stop mode
 				sensorsOnOff(0);
@@ -527,6 +529,8 @@ int main(void)
 				// PWR_EnterStopMode will deinitialize peripherals, enter stop mode,
 				// and then reinitialize everything after wakeup
 				PWR_EnterStopMode();
+				// Reconnect LoRaWAN after waking from stop mode
+				LoRaWAN_ReconnectAfterStopMode();
 
 				writeLog("Woken from stop mode!");
 
