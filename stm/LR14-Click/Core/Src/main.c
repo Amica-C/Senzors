@@ -508,7 +508,7 @@ int main(void)
 			writeLog("Stop mode requested, checking conditions...");
 
 			// Check if LoRaWAN is ready for stop mode
-			if (1 || LoRaWAN_IsReadyForStopMode())
+			if (LoRaWAN_IsJoined() && LoRaWAN_IsReadyForStopMode())
 			{
 				writeLog("LoRaWAN ready, entering stop mode for 10 minutes...");
 
