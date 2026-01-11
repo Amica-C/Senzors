@@ -260,15 +260,25 @@ void LoRaWAN_DisconnectForStopMode(void)
 
 void LoRaWAN_ReconnectAfterStopMode(void)
 {
+	// Re-initialize DevEUI if it was derived from MCU UID
+	if (s_otaa.DevEuiFromMcuUid)
+	{
+		FillDevEuiFromMcu(s_otaa.DevEui);
+	}
+	
+	// Re-initialize LoRa info module
+	LoraInfo_Init();
+	
 	// Re-initialize the LoRaWAN stack after waking from stop mode
 	LmHandlerInit(&Callbacks, APP_VERSION);
 	
 	// Reconfigure LoRaWAN MAC layer parameters
 	LmHandlerConfigure(&Params);
 	
-	// Restore DevEUI, JoinEUI and AppKey
+	// Restore DevEUI
 	SecureElementSetDevEui(s_otaa.DevEui);
-	// JoinEUI and AppKey should already be set by previous initialization
+	// Note: JoinEUI and AppKey should already be set in secure element
+	// from the initial LoRaWAN_SetJoinCredentials() call
 	
 	// Initiate OTAA join procedure to reconnect to the network
 	LmHandlerJoin(ACTIVATION_TYPE_OTAA, true);
