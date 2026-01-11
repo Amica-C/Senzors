@@ -93,11 +93,21 @@ HAL_StatusTypeDef RTC_SetWakeupTimer_10Minutes(void);
 ```
 Configures the RTC wakeup timer for a 10-minute period.
 
-#### LoRaWAN Check
+#### LoRaWAN Management
 ```c
 bool LoRaWAN_IsReadyForStopMode(void);
 ```
 Returns `true` if LoRaWAN stack is idle and ready for stop mode, `false` otherwise.
+
+```c
+void LoRaWAN_DisconnectForStopMode(void);
+```
+Gracefully halts the LoRaWAN stack before entering stop mode. This function stops all ongoing operations including join requests, making it safe to enter stop mode even when the device is in the process of joining the network.
+
+```c
+void LoRaWAN_ReconnectAfterStopMode(void);
+```
+Re-initializes the LoRaWAN stack and automatically initiates the join procedure to reconnect to the network after waking from stop mode. The device will automatically retry joining until successful.
 
 #### Power Management
 ```c
@@ -142,7 +152,7 @@ int main(void)
 
 ## Important Notes
 
-1. **LoRaWAN Safety**: The implementation ensures LoRaWAN operations are complete before entering stop mode to prevent communication failures.
+1. **LoRaWAN Safety**: The implementation automatically disconnects LoRaWAN before entering stop mode and reconnects after wakeup. This works regardless of the LoRaWAN state (joining, joined, or idle), solving the issue where stop mode was blocked during the join process.
 
 2. **Sensor Management**: Sensors are automatically turned off before entering stop mode.
 
@@ -160,25 +170,27 @@ int main(void)
 - `stm/LR14-Click/Core/Inc/i2c.h` - Added I2C deinit function
 - `stm/LR14-Click/Core/Inc/spi.h` - Added SPI deinit function
 - `stm/LR14-Click/Core/Inc/usart.h` - Added UART deinit function
-- `stm/LR14-Click/LoRaWAN/App/mt_lorawan_app.h` - Added LoRaWAN ready check function
+- `stm/LR14-Click/LoRaWAN/App/mt_lorawan_app.h` - Added LoRaWAN ready check, disconnect, and reconnect functions
 
 ### Source Files
-- `stm/LR14-Click/Core/Src/main.c` - Added stop mode control logic
+- `stm/LR14-Click/Core/Src/main.c` - Updated stop mode control logic to use disconnect/reconnect functions
 - `stm/LR14-Click/Core/Src/rtc.c` - Implemented RTC wakeup timer
 - `stm/LR14-Click/Core/Src/stm32_lpm_if.c` - Implemented stop mode entry/exit
 - `stm/LR14-Click/Core/Src/stm32wlxx_it.c` - Added RTC wakeup callback
 - `stm/LR14-Click/Core/Src/i2c.c` - Implemented I2C deinit
 - `stm/LR14-Click/Core/Src/spi.c` - Implemented SPI deinit
 - `stm/LR14-Click/Core/Src/usart.c` - Implemented UART deinit
-- `stm/LR14-Click/LoRaWAN/App/mt_lorawan_app.c` - Implemented LoRaWAN ready check
+- `stm/LR14-Click/LoRaWAN/App/mt_lorawan_app.c` - Implemented LoRaWAN ready check, disconnect, and reconnect functions
 
 ## Testing Recommendations
 
 1. **Basic Test**: Set `_GoToStop = 1` and verify device enters stop mode and wakes up after 10 minutes
 2. **LoRaWAN Test**: Verify LoRaWAN communication works before and after stop mode
-3. **Sensor Test**: Verify sensors work correctly after waking from stop mode
-4. **Current Measurement**: Measure actual current consumption in stop mode
-5. **Long-term Test**: Run device through multiple stop/wake cycles to verify stability
+3. **Join During Stop Test**: Set `_GoToStop = 1` while LoRaWAN is joining to verify it can still enter stop mode
+4. **Reconnect Test**: After wakeup, verify device successfully rejoins the network (check with `LoRaWAN_IsJoined()`)
+5. **Sensor Test**: Verify sensors work correctly after waking from stop mode
+6. **Current Measurement**: Measure actual current consumption in stop mode
+7. **Long-term Test**: Run device through multiple stop/wake cycles to verify stability
 
 ## Future Enhancements
 

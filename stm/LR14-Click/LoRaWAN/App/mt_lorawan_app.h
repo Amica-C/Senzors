@@ -153,4 +153,36 @@ int LoRaWAN_GetTxPower(int8_t *txPower);
  */
 bool LoRaWAN_IsReadyForStopMode(void);
 
+/**
+ * @brief Disconnect LoRaWAN from gateway before entering stop mode
+ * 
+ * This function gracefully halts the LoRaWAN stack before the device enters stop mode.
+ * It stops all ongoing operations including join requests and data transmissions.
+ * 
+ * **Important**: After calling this function, the device is no longer connected to
+ * the network. You must call LoRaWAN_ReconnectAfterStopMode() after waking up to
+ * restore connectivity.
+ * 
+ * @note This function can be called even if the device is in the middle of joining
+ * @note Call this before entering stop mode to properly shut down LoRaWAN
+ */
+void LoRaWAN_DisconnectForStopMode(void);
+
+/**
+ * @brief Reconnect LoRaWAN to gateway after waking from stop mode
+ * 
+ * This function re-initializes the LoRaWAN stack and initiates the join procedure
+ * to reconnect to the network after waking from stop mode.
+ * 
+ * **Process**:
+ * - Re-initializes the LoRaWAN handler and MAC layer
+ * - Restores credentials (DevEUI, JoinEUI, AppKey)
+ * - Initiates OTAA join procedure
+ * - Join attempts continue automatically until successful
+ * 
+ * @note Call LoRaWAN_ProcessMT() regularly to allow the join procedure to progress
+ * @note Use LoRaWAN_IsJoined() to check when the device has successfully rejoined
+ */
+void LoRaWAN_ReconnectAfterStopMode(void);
+
 #endif // LORAWAN_APP_H
