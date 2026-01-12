@@ -90,6 +90,7 @@ void SystemClock_Config(void);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 
+#ifdef DEBUG
 void writeLogNL(const char *buf)
 {
 	Uart_Info(buf);
@@ -118,7 +119,12 @@ void APP_LOG(int onOff, int vl, const char *format, ...)
 	writeLogVA(format, argList);
 	va_end(argList);
 }
-
+#else
+#define writeLogNL(...)
+#define writeLogVA(...)
+#define writeLog(...)
+#define APP_LOG(...)
+#endif
 void I2C_Scan(I2C_HandleTypeDef *hi2c) //
 {
 	HAL_StatusTypeDef res;
@@ -358,14 +364,7 @@ int main(void)
 			{
 				status = tempHum_Read(&hi2c2);
 				if (status == HAL_OK) //
-				{
-					//writeLog("temp:%d hum:%d", (int) (_tempHumData.temperature * 100.0f), (int) (_tempHumData.humidity * 100.0f));
 					sensBuffer_Add("temp:%d hum:%d ", (int) (_tempHumData.temperature * 100.0f), (int) (_tempHumData.humidity * 100.0f));
-				}
-				else //
-				{
-					//writeLog("temp read error:%d", (int) status);
-				}
 			}
 
 			if (ambient_Is(&hi2c2, _tryInit))
@@ -374,28 +373,14 @@ int main(void)
 
 				status = ambient_ReadLux(&hi2c2, &lux);
 				if (status == HAL_OK) //
-				{
-					//writeLog("lux:%d", (int) (lux * 100.0f));
 					sensBuffer_Add("lux:%d ", (int) (lux * 100.0f));
-				}
-				else //
-				{
-					//writeLog("lux read error:%d", (int) status);
-				}
 			}
 
 			if (barometer_Is(&hi2c2, _tryInit))
 			{
 				status = barometer_Read(&hi2c2);
 				if (status == HAL_OK)
-				{
-					//writeLog("pressure:%d, temp:%d", (int) (pressure * 100.0f), (int) (temp * 100.0f));
 					sensBuffer_Add("pressure:%d, temp:%d ", (int) (_tempBarometerData.pressure * 100.0f), (int) (_tempBarometerData.temperature * 100.0f));
-				}
-				else
-				{
-					//writeLog("pressure error:%d", (int) status);
-				}
 			}
 
 			if (flash_Is(&_flash, _tryInit))
@@ -419,7 +404,6 @@ int main(void)
 					sensBuffer_Add("nfc4 read:%d ", (int) dat);
 			}
 
-			/**/
 			if (scd41_Is(&hi2c2, _tryInit))
 			{
 				status = scd41_Read(&hi2c2);
@@ -484,14 +468,6 @@ int main(void)
 					writeLog("LoRaWAN: Cannot send - Status: %s", connectionStatus);
 				}
 			}
-			/*
-			 if (scd41_Is(&hi2c2, _tryInit))
-			 {
-			 status = scd41_Read(&hi2c2);
-			 if (status == HAL_OK)
-			 writeLog("mam");
-			 }
-			 */
 			if (nfc_interrupt_flag)
 			{
 				writeLog("nfc4 tag interrupt");	// don't know what to do with this.... and whether it makes sense
@@ -516,6 +492,7 @@ int main(void)
 
 				// Turn off sensors before stop mode
 				sensorsOnOff(0);
+				HAL_GPIO_WritePin(USER_LED_GPIO_Port, USER_LED_Pin, GPIO_PIN_RESET);
 
 				// Configure RTC wakeup timer for 10 minutes
 				status = RTC_SetWakeupTimer_10Minutes();
@@ -532,11 +509,11 @@ int main(void)
 				// Reconnect LoRaWAN after waking from stop mode
 				LoRaWAN_ReconnectAfterStopMode();
 
-				writeLog("Woken from stop mode!");
+				writeLog("start UUART read");
+				status = Uart_StartReceving(&huart1);
+				writeLog("UART read: %d", (int) status);
 
-				// Restart UART reception after waking up
-				//status = Uart_StartReceving(&huart1);
-				//writeLog("UART restarted: %d", (int) status);
+				writeLog("Woken from stop mode!");
 
 				// Clear the stop mode flags
 				_GoToStop = 0;

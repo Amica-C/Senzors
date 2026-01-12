@@ -71,6 +71,7 @@ void LoRaWAN_InitMT(const lorawan_otaa_keys_t *otaa)
 	if (s_otaa.DevEuiFromMcuUid)
 	{
 		FillDevEuiFromMcu(s_otaa.DevEui);
+		s_otaa.DevEuiFromMcuUid = false;	// // MT 10.1.2026 only one time
 	}
 	LoraInfo_Init();
 	LmHandlerInit(&Callbacks, APP_VERSION);

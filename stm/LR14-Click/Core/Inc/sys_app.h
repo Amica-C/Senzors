@@ -57,8 +57,12 @@ extern "C" {
 /* Map your own trace mechanism or to map UTIL_ADV_TRACE see examples from CubeFw, e.g.: */
 //#define APP_PRINTF(...)     /* do{ {UTIL_ADV_TRACE_COND_FSend(VLEVEL_ALWAYS, T_REG_OFF, TS_OFF, __VA_ARGS__);} }while(0); */
 //#define APP_LOG(TS,VL,...)  /* do{ {UTIL_ADV_TRACE_COND_FSend(VL, T_REG_OFF, TS, __VA_ARGS__);} }while(0); */
-void APP_LOG(int onOff, int vl, const char* format, ...);	// // MT 7.1.2026 moj log definovane v main.c
 
+#ifdef DEBUG
+void APP_LOG(int onOff, int vl, const char* format, ...);	// // MT 7.1.2026 moj log definovane v main.c
+#else
+#define APP_LOG(...)
+#endif
 /* USER CODE END APP_PRINT */
 
 /* USER CODE BEGIN EM */
