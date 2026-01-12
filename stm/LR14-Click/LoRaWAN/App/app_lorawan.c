@@ -22,9 +22,10 @@
 #include "app_lorawan.h"
 #include "lora_app.h"
 #include "sys_app.h"
+#include "stm32_seq.h"
 
 /* USER CODE BEGIN Includes */
-#include "mt_lorawan_app.h"
+
 /* USER CODE END Includes */
 
 /* External variables ---------------------------------------------------------*/
@@ -72,18 +73,19 @@ void MX_LoRaWAN_Init(void)
   /* USER CODE END MX_LoRaWAN_Init_2 */
   LoRaWAN_Init();
   /* USER CODE BEGIN MX_LoRaWAN_Init_3 */
-  LoRaWAN_InitMT(NULL);	// MT 10.1.2026
+
   /* USER CODE END MX_LoRaWAN_Init_3 */
 }
 
 void MX_LoRaWAN_Process(void)
 {
   /* USER CODE BEGIN MX_LoRaWAN_Process_1 */
-	LoRaWAN_ProcessMT();	// // MT 10.1.2026 LoRaWAN_ProcessMT
-  /* USER CODE END MX_LoRaWAN_Process_1 */
-  /* USER CODE BEGIN MX_LoRaWAN_Process_OS */
 
-  /* USER CODE END MX_LoRaWAN_Process_OS */
+  /* USER CODE END MX_LoRaWAN_Process_1 */
+  UTIL_SEQ_Run(UTIL_SEQ_DEFAULT);
+  /* USER CODE BEGIN MX_LoRaWAN_Process_2 */
+
+  /* USER CODE END MX_LoRaWAN_Process_2 */
 }
 
 /* USER CODE BEGIN EF */

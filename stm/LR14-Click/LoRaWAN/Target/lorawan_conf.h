@@ -7,7 +7,7 @@
   ******************************************************************************
   * @attention
   *
-  * Copyright (c) 2025 STMicroelectronics.
+  * Copyright (c) 2026 STMicroelectronics.
   * All rights reserved.
   *
   * This software is licensed under terms that can be found in the LICENSE file
@@ -122,15 +122,13 @@ extern "C" {
  * @brief Define the read access of the keys in memory
  * @note  this value should be disabled after the development process
  */
-/* USER CODE BEGIN KEY_EXTRACTABLE */
-#define KEY_EXTRACTABLE                                 0
-/* USER CODE END KEY_EXTRACTABLE */
+#define KEY_EXTRACTABLE                                 1
 
 /*!
  * @brief Enables/Disables the context storage management storage
  * @note  Must be enabled for LoRaWAN 1.0.4 or later.
  */
-#define CONTEXT_MANAGEMENT_ENABLED                      0
+#define CONTEXT_MANAGEMENT_ENABLED                      1
 
 /* Class B ------------------------------------*/
 /*!
@@ -189,40 +187,6 @@ extern "C" {
 #endif /* !CRITICAL_SECTION_END */
 
 /* USER CODE BEGIN EM */
-
-#ifndef LORAWAN_REGION
-#define LORAWAN_REGION          LORAMAC_REGION_EU868
-#endif
-
-#ifndef LORAWAN_DEFAULT_CLASS
-#define LORAWAN_DEFAULT_CLASS   CLASS_A
-#endif
-
-#ifndef LORAWAN_USE_OTAA
-#define LORAWAN_USE_OTAA        1
-#endif
-
-#ifndef LORAWAN_DEFAULT_FPORT
-#define LORAWAN_DEFAULT_FPORT   2
-#endif
-
-#ifndef LORAWAN_DEFAULT_CONFIRMED
-#define LORAWAN_DEFAULT_CONFIRMED false
-#endif
-
-#ifndef LORAWAN_CLASSB_PINGSLOT_PERIODICITY
-#define LORAWAN_CLASSB_PINGSLOT_PERIODICITY  3  // every 8s
-#endif
-
-#ifndef LORAWAN_MAX_TX_RETRIES
-#define LORAWAN_MAX_TX_RETRIES  3
-#endif
-
-#ifndef LORAWAN_ADR_ENABLE
-#define LORAWAN_ADR_ENABLE      true
-#endif
-
-
 
 /* USER CODE END EM */
 

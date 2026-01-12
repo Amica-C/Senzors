@@ -1,9 +1,9 @@
 /* USER CODE BEGIN Header */
 /**
   ******************************************************************************
-  * @file    app_version.h
+  * @file    sys_conf.h
   * @author  MCD Application Team
-  * @brief   Definition the version of the application
+  * @brief   Applicative configuration, e.g. : debug, trace, low power, sensors
   ******************************************************************************
   * @attention
   *
@@ -19,15 +19,14 @@
 /* USER CODE END Header */
 
 /* Define to prevent recursive inclusion -------------------------------------*/
-#ifndef __APP_VERSION_H__
-#define __APP_VERSION_H__
+#ifndef __SYS_CONF_H__
+#define __SYS_CONF_H__
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 /* Includes ------------------------------------------------------------------*/
-
 /* USER CODE BEGIN Includes */
 
 /* USER CODE END Includes */
@@ -38,15 +37,51 @@ extern "C" {
 /* USER CODE END ET */
 
 /* Exported constants --------------------------------------------------------*/
-#define APP_VERSION_MAIN   (0x01U) /*!< [31:24] main version */
-#define APP_VERSION_SUB1   (0x04U) /*!< [23:16] sub1 version */
-#define APP_VERSION_SUB2   (0x00U) /*!< [15:8]  sub2 version */
-#define APP_VERSION_RC     (0x00U) /*!< [7:0]  release candidate */
 
-#define APP_VERSION_MAIN_SHIFT 24  /*!< main byte shift */
-#define APP_VERSION_SUB1_SHIFT 16  /*!< sub1 byte shift */
-#define APP_VERSION_SUB2_SHIFT 8   /*!< sub2 byte shift */
-#define APP_VERSION_RC_SHIFT   0   /*!< release candidate byte shift */
+/**
+  * @brief Temperature and pressure values are retrieved from sensors shield
+  *        (instead of sending dummy values). It requires MEMS IKS shield
+  */
+#define SENSOR_ENABLED                       0
+
+/**
+  * @brief  Verbose level for all trace logs
+  */
+#define VERBOSE_LEVEL                        VLEVEL_M
+
+/**
+  * @brief Enable trace logs
+  */
+#define APP_LOG_ENABLED                      1
+
+/**
+  * @brief Activate monitoring (probes) of some internal RF signals for debug purpose
+  */
+#define DEBUG_SUBGHZSPI_MONITORING_ENABLED   0
+
+#define DEBUG_RF_NRESET_ENABLED              0
+
+#define DEBUG_RF_HSE32RDY_ENABLED            0
+
+#define DEBUG_RF_SMPSRDY_ENABLED             0
+
+#define DEBUG_RF_LDORDY_ENABLED              0
+
+#define DEBUG_RF_DTB1_ENABLED                0
+
+#define DEBUG_RF_BUSY_ENABLED                0
+
+/**
+  * @brief Enable/Disable MCU Debugger pins (dbg serial wires)
+  * @note  by HW serial wires are ON by default, need to put them OFF to save power
+  */
+#define DEBUGGER_ENABLED                     1
+
+/**
+  * @brief Disable Low Power mode
+  * @note  0: LowPowerMode enabled. MCU enters stop2 mode, 1: LowPowerMode disabled. MCU enters sleep mode only
+  */
+#define LOW_POWER_DISABLE                    0
 
 /* USER CODE BEGIN EC */
 
@@ -57,15 +92,7 @@ extern "C" {
 
 /* USER CODE END EV */
 
-/* Exported macros -----------------------------------------------------------*/
-/**
-  * @brief Application version
-  */
-#define APP_VERSION         ((APP_VERSION_MAIN  << APP_VERSION_MAIN_SHIFT)\
-                             |(APP_VERSION_SUB1 << APP_VERSION_SUB1_SHIFT)\
-                             |(APP_VERSION_SUB2 << APP_VERSION_SUB2_SHIFT)\
-                             |(APP_VERSION_RC   << APP_VERSION_RC_SHIFT))
-
+/* Exported macro ------------------------------------------------------------*/
 /* USER CODE BEGIN EM */
 
 /* USER CODE END EM */
@@ -79,4 +106,4 @@ extern "C" {
 }
 #endif
 
-#endif /*__APP_VERSION_H__*/
+#endif /* __SYS_CONF_H__ */

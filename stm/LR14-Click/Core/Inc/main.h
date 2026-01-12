@@ -65,6 +65,9 @@ extern volatile uint8_t _WokenFromStop;
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
+#define RTC_N_PREDIV_S 10
+#define RTC_PREDIV_S ((1<<RTC_N_PREDIV_S)-1)
+#define RTC_PREDIV_A ((1<<(15-RTC_N_PREDIV_S))-1)
 #define NFC_INT_Pin GPIO_PIN_5
 #define NFC_INT_GPIO_Port GPIOB
 #define NFC_INT_EXTI_IRQn EXTI9_5_IRQn

@@ -7,7 +7,7 @@
   ******************************************************************************
   * @attention
   *
-  * Copyright (c) 2025 STMicroelectronics.
+  * Copyright (c) 2026 STMicroelectronics.
   * All rights reserved.
   *
   * This software is licensed under terms that can be found in the LICENSE file
@@ -109,9 +109,11 @@ void LoraInfo_Init(void)
 
   if (loraInfo.Region == 0)
   {
-    /* USER CODE BEGIN LoraInfo_Init_NO_REGION */
-
-    /* USER CODE END LoraInfo_Init_NO_REGION */
+    APP_PRINTF("error: At least one region shall be defined in the MW: check lorawan_conf.h \r\n");
+    while (1 != UTIL_ADV_TRACE_IsBufferEmpty())
+    {
+      /* Wait that all printfs are completed*/
+    }
     while (1) {} /* At least one region shall be defined */
   }
 

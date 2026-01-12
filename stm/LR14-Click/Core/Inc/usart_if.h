@@ -1,9 +1,9 @@
 /* USER CODE BEGIN Header */
 /**
   ******************************************************************************
-  * @file    stm32_lpm_if.h
+  * @file    usart_if.h
   * @author  MCD Application Team
-  * @brief   Header for Low Power Manager interface configuration
+  * @brief   Header for USART interface configuration
   ******************************************************************************
   * @attention
   *
@@ -18,17 +18,19 @@
   */
 /* USER CODE END Header */
 
+#include "stm32_adv_trace.h"
+#include "usart.h"
+#include "dma.h"
+
 /* Define to prevent recursive inclusion -------------------------------------*/
-#ifndef __STM32_LPM_IF_H__
-#define __STM32_LPM_IF_H__
+#ifndef __USART_IF_H__
+#define __USART_IF_H__
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 /* Includes ------------------------------------------------------------------*/
-#include "stm32_lpm.h"
-
 /* USER CODE BEGIN Includes */
 
 /* USER CODE END Includes */
@@ -55,38 +57,54 @@ extern "C" {
 
 /* Exported functions prototypes ---------------------------------------------*/
 /**
-  * @brief Enters Low Power Off Mode
+  * @brief  Init the UART and associated DMA.
+  * @param  cb TxCpltCallback
+  * @return @ref UTIL_ADV_TRACE_Status_t
   */
-void PWR_EnterOffMode(void);
+UTIL_ADV_TRACE_Status_t vcom_Init(void (*cb)(void *));
 
 /**
-  * @brief Exits Low Power Off Mode
+  * @brief  init receiver of vcom
+  * @param  RxCb callback when Rx char is received
+  * @return @ref UTIL_ADV_TRACE_Status_t
   */
-void PWR_ExitOffMode(void);
+UTIL_ADV_TRACE_Status_t vcom_ReceiveInit(void (*RxCb)(uint8_t *rxChar, uint16_t size, uint8_t error));
 
 /**
-  * @brief Enters Low Power Stop Mode
-  * @note ARM exists the function when waking up
+  * @brief  DeInit the UART and associated DMA.
+  * @return @ref UTIL_ADV_TRACE_Status_t
   */
-void PWR_EnterStopMode(void);
+UTIL_ADV_TRACE_Status_t vcom_DeInit(void);
 
 /**
-  * @brief Exits Low Power Stop Mode
-  * @note Enable the pll at 32MHz
+  * @brief  send buffer \p p_data of size \p size to vcom in polling mode
+  * @param  p_data data to be sent
+  * @param  size of buffer p_data to be sent
   */
-void PWR_ExitStopMode(void);
+void vcom_Trace(uint8_t *p_data, uint16_t size);
 
 /**
-  * @brief Enters Low Power Sleep Mode
-  * @note ARM exits the function when waking up
+  * @brief  send buffer \p p_data of size \p size to vcom using DMA
+  * @param  p_data data to be sent
+  * @param  size of buffer p_data to be sent
+  * @return @ref UTIL_ADV_TRACE_Status_t
   */
-void PWR_EnterSleepMode(void);
+UTIL_ADV_TRACE_Status_t vcom_Trace_DMA(uint8_t *p_data, uint16_t size);
 
 /**
-  * @brief Exits Low Power Sleep Mode
-  * @note ARM exits the function when waking up
+  * @brief  last byte has been sent on the uart line
   */
-void PWR_ExitSleepMode(void);
+void vcom_IRQHandler(void);
+
+/**
+  * @brief  last byte has been sent from memory to uart data register
+  */
+void vcom_DMA_TX_IRQHandler(void);
+
+/**
+  * @brief  Resume the UART and associated DMA (used by LPM)
+  */
+void vcom_Resume(void);
 
 /* USER CODE BEGIN EFP */
 
@@ -96,4 +114,4 @@ void PWR_ExitSleepMode(void);
 }
 #endif
 
-#endif /*__STM32_LPM_IF_H__ */
+#endif /* __USART_IF_H__ */
