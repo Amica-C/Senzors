@@ -1,21 +1,21 @@
 /* USER CODE BEGIN Header */
 /**
-  ******************************************************************************
-  * @file    stm32_lpm_if.c
-  * @author  MCD Application Team
-  * @brief   Low layer function to enter/exit low power modes (stop, sleep)
-  ******************************************************************************
-  * @attention
-  *
-  * Copyright (c) 2026 STMicroelectronics.
-  * All rights reserved.
-  *
-  * This software is licensed under terms that can be found in the LICENSE file
-  * in the root directory of this software component.
-  * If no LICENSE file comes with this software, it is provided AS-IS.
-  *
-  ******************************************************************************
-  */
+ ******************************************************************************
+ * @file    stm32_lpm_if.c
+ * @author  MCD Application Team
+ * @brief   Low layer function to enter/exit low power modes (stop, sleep)
+ ******************************************************************************
+ * @attention
+ *
+ * Copyright (c) 2026 STMicroelectronics.
+ * All rights reserved.
+ *
+ * This software is licensed under terms that can be found in the LICENSE file
+ * in the root directory of this software component.
+ * If no LICENSE file comes with this software, it is provided AS-IS.
+ *
+ ******************************************************************************
+ */
 /* USER CODE END Header */
 
 /* Includes ------------------------------------------------------------------*/
@@ -25,7 +25,7 @@
 #include "usart_if.h"
 
 /* USER CODE BEGIN Includes */
-
+#include "spi.h"
 /* USER CODE END Includes */
 
 /* External variables ---------------------------------------------------------*/
@@ -92,6 +92,10 @@ void PWR_ExitOffMode(void)
 void PWR_EnterStopMode(void)
 {
   /* USER CODE BEGIN EnterStopMode_1 */
+return;
+	// Deinitialize peripherals before entering stop mode
+	//MX_I2C2_DeInit();	// MT 10.1.2026 is in SensorOFF
+	MX_SPI1_DeInit();
 
   /* USER CODE END EnterStopMode_1 */
   HAL_SuspendTick();
@@ -110,7 +114,7 @@ void PWR_EnterStopMode(void)
 void PWR_ExitStopMode(void)
 {
   /* USER CODE BEGIN ExitStopMode_1 */
-
+return;
   /* USER CODE END ExitStopMode_1 */
   /* Resume sysTick : work around for debugger problem in dual core */
   HAL_ResumeTick();
@@ -122,7 +126,9 @@ void PWR_ExitStopMode(void)
   /* Resume not retained USARTx and DMA */
   vcom_Resume();
   /* USER CODE BEGIN ExitStopMode_2 */
-
+	// After wakeup from stop mode, reconfigure system clock
+	SystemClock_Config();
+	MX_SPI1_Init();
   /* USER CODE END ExitStopMode_2 */
 }
 

@@ -18,4 +18,22 @@
 HAL_StatusTypeDef MY_I2C_IsDeviceReady(I2C_HandleTypeDef *hi2c, uint16_t DevAddress, uint32_t Trials, uint32_t Timeout);
 
 
+/**
+ * @brief Initialization of all sensors, must be called before for store of hi2c handler
+ */
+void sensors_Init(I2C_HandleTypeDef* hi2c);
+
+/**
+ * @brief reading sensor one by one
+ */
+void sensors_Read();
+
+/**
+ * @brief the NFC4 Interrupt has been fired
+ */
+void sensors_NFCInt();
+
+void sensors_OnOff(int8_t onOff);
+
+
 #endif /* INC_MYSENSORS_H_ */

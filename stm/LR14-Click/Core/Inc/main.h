@@ -47,6 +47,20 @@ extern "C" {
 /* Exported macro ------------------------------------------------------------*/
 /* USER CODE BEGIN EM */
 
+#ifdef DEBUG
+#include <stdarg.h>
+void writeLogNL(const char *buf);
+void writeLogVA(const char *format, va_list argList);
+void writeLog(const char *format, ...);
+void APP_LOG(int onOff, int vl, const char *format, ...);
+#else
+#define writeLogNL(...)
+#define writeLogVA(...)
+#define writeLog(...)
+#define APP_LOG(...)
+#endif
+
+
 /* USER CODE END EM */
 
 /* Exported functions prototypes ---------------------------------------------*/

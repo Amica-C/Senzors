@@ -36,6 +36,10 @@
 #include "flash_if.h"
 
 /* USER CODE BEGIN Includes */
+#ifdef APP_LOG
+#undef APP_LOG
+void APP_LOG(int onOff, int vl, const char *format, ...);
+#endif
 
 /* USER CODE END Includes */
 

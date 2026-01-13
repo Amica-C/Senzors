@@ -141,7 +141,7 @@ void SystemApp_Init(void)
 void UTIL_SEQ_Idle(void)
 {
   /* USER CODE BEGIN UTIL_SEQ_Idle_1 */
-return;	//kokot
+//return;	//kokot
   /* USER CODE END UTIL_SEQ_Idle_1 */
   UTIL_LPM_EnterLowPower();
   /* USER CODE BEGIN UTIL_SEQ_Idle_2 */

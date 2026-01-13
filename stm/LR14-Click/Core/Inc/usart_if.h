@@ -47,7 +47,8 @@ extern "C" {
 
 /* External variables --------------------------------------------------------*/
 /* USER CODE BEGIN EV */
-
+extern volatile uint8_t uart_data_ready;
+extern char uart_req_buf[];
 /* USER CODE END EV */
 
 /* Exported macro ------------------------------------------------------------*/
@@ -107,6 +108,27 @@ void vcom_DMA_TX_IRQHandler(void);
 void vcom_Resume(void);
 
 /* USER CODE BEGIN EFP */
+/**
+ * @brief Write to UART1
+ */
+UTIL_ADV_TRACE_Status_t Uart_Info(const char *strInfo);
+
+/**
+ * @brief start reading
+ * @param uart - handle for the uart being used
+ */
+UTIL_ADV_TRACE_Status_t Uart_StartReceving(UART_HandleTypeDef *uart);
+
+/**
+ * @brief continue with next reading if data arrived
+ */
+UTIL_ADV_TRACE_Status_t Uart_NextReceving();
+
+/**
+ * @brief called if char is ready from UART
+ * @retval -1 - other UART, 0 - char is accepted, next receiving must start, 1 - data ready
+ */
+int HAL_UART_RxCharMT(UART_HandleTypeDef *huart, uint8_t charRx);
 
 /* USER CODE END EFP */
 
