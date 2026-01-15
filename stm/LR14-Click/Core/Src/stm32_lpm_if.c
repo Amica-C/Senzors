@@ -26,6 +26,7 @@
 
 /* USER CODE BEGIN Includes */
 #include "spi.h"
+#include "radio.h"
 /* USER CODE END Includes */
 
 /* External variables ---------------------------------------------------------*/
@@ -92,7 +93,7 @@ void PWR_ExitOffMode(void)
 void PWR_EnterStopMode(void)
 {
   /* USER CODE BEGIN EnterStopMode_1 */
-return;
+//return;
 	// Deinitialize peripherals before entering stop mode
 	//MX_I2C2_DeInit();	// MT 10.1.2026 is in SensorOFF
 	MX_SPI1_DeInit();
@@ -114,7 +115,7 @@ return;
 void PWR_ExitStopMode(void)
 {
   /* USER CODE BEGIN ExitStopMode_1 */
-return;
+//return;
   /* USER CODE END ExitStopMode_1 */
   /* Resume sysTick : work around for debugger problem in dual core */
   HAL_ResumeTick();
@@ -129,6 +130,8 @@ return;
 	// After wakeup from stop mode, reconfigure system clock
 	SystemClock_Config();
 	MX_SPI1_Init();
+	Uart_Start();
+
   /* USER CODE END ExitStopMode_2 */
 }
 

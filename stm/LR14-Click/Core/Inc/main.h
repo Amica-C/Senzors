@@ -52,12 +52,10 @@ extern "C" {
 void writeLogNL(const char *buf);
 void writeLogVA(const char *format, va_list argList);
 void writeLog(const char *format, ...);
-void APP_LOG(int onOff, int vl, const char *format, ...);
 #else
 #define writeLogNL(...)
 #define writeLogVA(...)
 #define writeLog(...)
-#define APP_LOG(...)
 #endif
 
 
@@ -71,10 +69,9 @@ void Error_Handler(void);
 void SystemClock_Config(void);
 
 /**
- * @brief External variables for stop mode control
+ * @brief start of UART reading
  */
-extern volatile int8_t _GoToStop;
-extern volatile uint8_t _WokenFromStop;
+void Uart_Start();
 
 /* USER CODE END EFP */
 

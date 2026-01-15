@@ -303,16 +303,5 @@ void SUBGHZ_Radio_IRQHandler(void)
 
 /* USER CODE BEGIN 1 */
 
-/**
- * @brief RTC wakeup timer callback
- * 
- * This callback is called when the RTC wakeup timer expires after 10 minutes.
- * It sets a flag to indicate the device has woken from stop mode.
- */
-void HAL_RTCEx_WakeUpTimerEventCallback(RTC_HandleTypeDef *hrtc)
-{
-  // Set flag to indicate we woke up from stop mode
-  _WokenFromStop = 1;
-}
 
 /* USER CODE END 1 */

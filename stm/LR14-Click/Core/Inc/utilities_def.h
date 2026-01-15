@@ -80,6 +80,9 @@ typedef enum
   CFG_SEQ_Task_LoRaStoreContextEvent,
   CFG_SEQ_Task_LoRaStopJoinEvent,
   /* USER CODE BEGIN CFG_SEQ_Task_Id_t */
+  CFG_SEQ_Task_Sensors,			// MT 13.1.2026
+  CFG_SEQ_Task_Uart_RX,			// MT 14.1.2026 UART data receive ready
+  CFG_SEQ_Task_NFC_INT,			// interrupt from NFC
 
   /* USER CODE END CFG_SEQ_Task_Id_t */
   CFG_SEQ_Task_NBR

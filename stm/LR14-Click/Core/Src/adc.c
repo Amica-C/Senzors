@@ -104,7 +104,7 @@ void HAL_ADC_MspInit(ADC_HandleTypeDef* adcHandle)
     __HAL_RCC_ADC_CLK_ENABLE();
 
     /* ADC interrupt Init */
-    HAL_NVIC_SetPriority(ADC_IRQn, 3, 0);
+    HAL_NVIC_SetPriority(ADC_IRQn, 1, 0);
     HAL_NVIC_EnableIRQ(ADC_IRQn);
   /* USER CODE BEGIN ADC_MspInit 1 */
 

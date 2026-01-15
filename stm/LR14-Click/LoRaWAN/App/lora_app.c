@@ -16,6 +16,9 @@
   *
   ******************************************************************************
   */
+
+
+
 /* USER CODE END Header */
 
 /* Includes ------------------------------------------------------------------*/
@@ -36,11 +39,7 @@
 #include "flash_if.h"
 
 /* USER CODE BEGIN Includes */
-#ifdef APP_LOG
-#undef APP_LOG
-void APP_LOG(int onOff, int vl, const char *format, ...);
-#endif
-
+//#include "main.h"	// because of APP_LOG
 /* USER CODE END Includes */
 
 /* External variables ---------------------------------------------------------*/
@@ -304,7 +303,7 @@ static UTIL_TIMER_Object_t StopJoinTimer;
 void LoRaWAN_Init(void)
 {
   /* USER CODE BEGIN LoRaWAN_Init_LV */
-
+	APP_LOG(TS_OFF, VLEVEL_M, "LoRaWAN_Init IN ...\r\n");
   /* USER CODE END LoRaWAN_Init_LV */
 
   /* USER CODE BEGIN LoRaWAN_Init_1 */
@@ -346,6 +345,7 @@ void LoRaWAN_Init(void)
   }
 
   /* USER CODE BEGIN LoRaWAN_Init_Last */
+	APP_LOG(TS_OFF, VLEVEL_M, "LoRaWAN_Init OUT ...\r\n");
 
   /* USER CODE END LoRaWAN_Init_Last */
 }

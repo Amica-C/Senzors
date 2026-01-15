@@ -20,7 +20,7 @@ void sleeper_Init(sleeper_t *v, uint32_t sleepMS) //
 
 int sleeper_IsElapsed(const sleeper_t *v) //
 {
-	return !v->Stop && HAL_GetTick() - v->InicTime > v->SleepMS;
+	return !v->Stop && (v->SleepMS == 0 || HAL_GetTick() - v->InicTime > v->SleepMS);
 }
 
 int sleeper_IsElapsedNext(sleeper_t *v) //

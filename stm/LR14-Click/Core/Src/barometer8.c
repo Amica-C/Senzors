@@ -127,7 +127,7 @@ HAL_StatusTypeDef barometer_Read(I2C_HandleTypeDef *hi2c)
 
 			if ((status = HAL_I2C_Mem_Read(hi2c, ILPS22QS_I2C_ADDR, REG_PRESS_OFFSET, 1, raw_data, 2, 100)) != HAL_OK)
 				break;
-			uint32_t factoryOffset = (uint32_t)raw_data[1] << 16 | (uint32_t)raw_data[0];
+			//uint32_t factoryOffset = (uint32_t)raw_data[1] << 16 | (uint32_t)raw_data[0];
 
 
 			// Read Pressure (3 bytes) and Temperature (2 bytes) starting from PRESS_OUT_XL

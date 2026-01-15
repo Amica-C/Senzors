@@ -21,7 +21,7 @@
  */
 typedef struct //
 {
-	uint32_t SleepMS;	// time (ms) for elapsing
+	uint32_t SleepMS;	// time (ms) for elapsing, 0 - no pause
 	uint32_t InicTime;	// the core time for compare
 	uint8_t Stop;		// 1 - sleeper_t is stopped, 0 - is working
 } sleeper_t;

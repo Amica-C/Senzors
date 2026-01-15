@@ -69,7 +69,10 @@ extern "C" {
 #endif /* APP_LOG_ENABLED */
 
 /* USER CODE BEGIN EM */
-
+#ifdef APP_LOG
+#undef APP_LOG
+#define APP_LOG(TS,VL,...) {writeLog( __VA_ARGS__);}
+#endif
 /* USER CODE END EM */
 
 /* Exported functions prototypes ---------------------------------------------*/
