@@ -5,7 +5,7 @@
  *      Author: Milan
  */
 
-#include "mysensors.h"
+#include "i2c.h"
 #include "barometer8.h"
 
 // ILPS22QS I2C Address (SDO connected to GND by default on Barometer 8 Click)
@@ -70,6 +70,7 @@ HAL_StatusTypeDef barometer_On(I2C_HandleTypeDef *hi2c)
          0 ODR3 ODR2 ODR1 ODR0 AVG2 AVG1 AVG0
 	 */
 	const uint8_t val = 0b00011010;
+	_tempBarometerData.isDataValid = 0;
 	return barometer_onOff(hi2c, val);
 }
 
@@ -82,7 +83,7 @@ HAL_StatusTypeDef barometer_Off(I2C_HandleTypeDef *hi2c)
 
 HAL_StatusTypeDef barometer_Init(I2C_HandleTypeDef *hi2c)
 {
-	HAL_StatusTypeDef status = MY_I2C_IsDeviceReady(hi2c, ILPS22QS_I2C_ADDR, 2, 2);	// first check
+	HAL_StatusTypeDef status = I2C_IsDeviceReadyMT(hi2c, ILPS22QS_I2C_ADDR, 2, 2);	// first check
 
 	if (status == HAL_OK)
 		do
@@ -146,6 +147,7 @@ HAL_StatusTypeDef barometer_Read(I2C_HandleTypeDef *hi2c)
 			// Process Temperature (16-bit signed)
 			int16_t raw_temp = (int16_t) ((uint16_t) raw_data[4] << 8 | raw_data[3]);
 			_tempBarometerData.temperature = (float) raw_temp / 100.0f;
+			_tempBarometerData.isDataValid = 1;
 		} while (0);
 	}
 	return status;

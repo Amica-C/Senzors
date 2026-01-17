@@ -22,6 +22,7 @@ typedef struct //
 {
     float pressure;
     float temperature;
+    int8_t isDataValid;	// data valid/invalid
 } barometer_t;
 
 /**

@@ -155,4 +155,15 @@ void MX_I2C2_DeInit(void)
 	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_12, GPIO_PIN_SET);
 }
 
+HAL_StatusTypeDef I2C_IsDeviceReadyMT(I2C_HandleTypeDef *hi2c, uint16_t DevAddress, uint32_t Trials, uint32_t Timeout)
+{
+	HAL_StatusTypeDef status = HAL_I2C_IsDeviceReady(hi2c, DevAddress, Trials, Timeout);
+	if (status == HAL_BUSY)
+	{
+		HAL_I2C_DeInit(hi2c);
+		HAL_Delay(100);
+		HAL_I2C_Init(hi2c);
+	}
+	return status;
+}
 /* USER CODE END 1 */

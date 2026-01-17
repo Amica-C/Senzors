@@ -24,6 +24,7 @@ typedef struct //
 {
     float temperature;
     float humidity;
+    int8_t isDataValid;	// data valid/invalid
 } tempHum_t;
 
 /**

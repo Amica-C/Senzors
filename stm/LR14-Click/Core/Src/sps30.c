@@ -4,7 +4,7 @@
  *  Created on: 2. 1. 2026
  *      Author: Milan
  */
-#include "mysensors.h"
+#include "i2c.h"
 #include "sps30.h"
 #include <string.h>
 
@@ -96,7 +96,7 @@ HAL_StatusTypeDef sps30_Init(I2C_HandleTypeDef *hi2c)
 	status = HAL_I2C_Master_Transmit(hi2c, SPS30_I2C_ADDR, cmd, 2, 100);
 	HAL_Delay(10); // Minimum 5ms delay required after wakeup
 
-	status = MY_I2C_IsDeviceReady(hi2c, SPS30_I2C_ADDR, 2, 2);	// first check
+	status = I2C_IsDeviceReadyMT(hi2c, SPS30_I2C_ADDR, 2, 2);	// first check
 
 	if (status == HAL_OK)
 	{
@@ -104,7 +104,6 @@ HAL_StatusTypeDef sps30_Init(I2C_HandleTypeDef *hi2c)
 
 		do
 		{
-
 			if ((status = HAL_I2C_Master_Transmit(hi2c, SPS30_I2C_ADDR, cmd, 2, 100)) != HAL_OK)
 				break;
 			HAL_Delay(110); // Wait for sensor to reboot
@@ -125,6 +124,7 @@ HAL_StatusTypeDef sps30_On(I2C_HandleTypeDef *hi2c)
 {
 	HAL_StatusTypeDef status = HAL_ERROR;
 
+	_sps30Data.isDataValid = 0;
 	if (_isSps30)
 	{
 		uint8_t cmd[5] = { };
@@ -238,6 +238,7 @@ HAL_StatusTypeDef sps30_Read(I2C_HandleTypeDef *hi2c)
 				// buffer[b_idx+5] is CRC
 
 				memcpy(&f_ptr[i], raw_float, 4);
+				_sps30Data.isDataValid = 1;
 			}
 		} while (0);
 	}

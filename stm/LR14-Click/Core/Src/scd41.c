@@ -4,7 +4,7 @@
  *  Created on: 29. 12. 2025
  *      Author: Milan
  */
-#include "mysensors.h"
+#include "i2c.h"
 #include "scd41.h"
 
 // I2C Addresses
@@ -28,7 +28,7 @@
 
 
 // default settings
-scd41_t _scd41Data = { .altitude = -1, .co2 = -1, .humidity = -1.0f, .temperature = -1000.0f};
+scd41_t _scd41Data = { .altitude = -1, .co2 = -1, .humidity = -1.0f, .temperature = -1000.0f, .isDataValid = 0};
 
 static int8_t _isScd41 = 0;
 
@@ -88,6 +88,7 @@ int8_t scd41_Is(I2C_HandleTypeDef *hi2c, int8_t tryInit)
 
 HAL_StatusTypeDef scd41_On(I2C_HandleTypeDef *hi2c)
 {
+	_scd41Data.isDataValid = 0;
 	return scd41_onOff(hi2c, SCD41_CMD_START);
 }
 
@@ -98,7 +99,7 @@ HAL_StatusTypeDef scd41_Off(I2C_HandleTypeDef *hi2c)
 
 HAL_StatusTypeDef scd41_Init(I2C_HandleTypeDef *hi2c)
 {
-	HAL_StatusTypeDef ret = MY_I2C_IsDeviceReady(hi2c, SCD41_ADDR, 2, 2);	// first check
+	HAL_StatusTypeDef ret = I2C_IsDeviceReadyMT(hi2c, SCD41_ADDR, 2, 2);	// first check
 
 	if (ret == HAL_OK)
 	{
@@ -218,6 +219,7 @@ HAL_StatusTypeDef scd41_Read(I2C_HandleTypeDef *hi2c)
 			_scd41Data.co2 = (uint16_t) ((buf[0] << 8) | buf[1]);
 			_scd41Data.temperature = -45.0f + 175.0f * (float) ((buf[3] << 8) | buf[4]) / 65536.0f;
 			_scd41Data.humidity = 100.0f * (float) ((buf[6] << 8) | buf[7]) / 65536.0f;
+			_scd41Data.isDataValid = 1;
 		} while (0);
 	}
 	return status;

@@ -17,6 +17,18 @@
 #define __AMBIENT_21__
 #include "stm32wlxx_hal.h"
 
+typedef struct //
+{
+    float lux;	// value
+    int8_t isDataValid;	// data valid/invalid.
+} ambient_t;
+
+/**
+ * @brief data(structure) where current ambient value is store.
+ * Before using of this data, check item "isDataValid"
+ */
+extern ambient_t _ambientData;
+
 /**
  * @brief - check if light sensor is present
  * @param tryInit - in case sensor is not yet initialized, 1 - attempt to initialize again, 0 - no
@@ -51,14 +63,14 @@ HAL_StatusTypeDef ambient_On(I2C_HandleTypeDef *hi2c);
 HAL_StatusTypeDef ambient_Off(I2C_HandleTypeDef *hi2c);
 
 /**
- * @brief read value from sensor
+ * @brief read value from sensor, the value is in _ambientData
  * @retval
  * 	HAL_OK - have data,
  * 	HAL_BUSY - next reading in progress,
  * 	HAL_TIMEOUT - sensor is not turned on
  * 	HAL_ERROR - error
  */
-HAL_StatusTypeDef ambient_ReadLux(I2C_HandleTypeDef *hi2c, float *luxOut);
+HAL_StatusTypeDef ambient_ReadLux(I2C_HandleTypeDef *hi2c);
 
 #endif
 

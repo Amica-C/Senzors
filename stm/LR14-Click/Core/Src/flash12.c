@@ -1,8 +1,4 @@
 #include "flash12.h"
-#include "main.h"
-
-//#define FLASH_CS_PORT  SPI1_CS_GPIO_Port
-//#define FLASH_CS_PIN   SPI1_CS_Pin
 
 // Commands
 #define CMD_READ_ID          0x9F

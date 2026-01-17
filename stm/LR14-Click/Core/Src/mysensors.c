@@ -5,16 +5,10 @@
  *      Author: Milan
  */
 
-#include "mysensors.h"
 #include "main.h"
-#include "temphum23.h"
-#include "ambient21.h"
+#include "mysensors.h"
 #include "flash12.h"
 #include "nfctag4.h"
-#include "barometer8.h"
-#include "sps30.h"
-#include "scd41.h"
-
 #include "i2c.h"
 #include "spi.h"
 #include "utils/utils.h"
@@ -43,6 +37,12 @@ static int _processReadTimeout = 3000;	// pause between reading data from sensor
 static UTIL_TIMER_Object_t _sensorTimerReading = { };
 static uint32_t _sensorTimeout = 30000;	// interval reading data from sensor
 static uint32_t _sensorSeqID = 0;
+
+// because of power consumtion, the high powered sensor cannot be measure, must be divide to more loops
+enum
+{
+
+};
 
 static void sensBuffer_Reset()
 {
@@ -112,11 +112,9 @@ void sensors_Read()
 
 	if (ambient_Is(_hi2c, _tryInit))
 	{
-		float lux;
-
-		status = ambient_ReadLux(_hi2c, &lux);
+		status = ambient_ReadLux(_hi2c);
 		if (status == HAL_OK) //
-			sensBuffer_Add("lux:%d ", (int) (lux * 100.0f));
+			sensBuffer_Add("lux:%d ", (int) (_ambientData.lux * 100.0f));
 	}
 
 	if (barometer_Is(_hi2c, _tryInit))
@@ -193,17 +191,7 @@ void sensors_Read()
 	}
 }
 
-HAL_StatusTypeDef MY_I2C_IsDeviceReady(I2C_HandleTypeDef *hi2c, uint16_t DevAddress, uint32_t Trials, uint32_t Timeout)
-{
-	HAL_StatusTypeDef status = HAL_I2C_IsDeviceReady(hi2c, DevAddress, Trials, Timeout);
-	if (status == HAL_BUSY)
-	{
-		HAL_I2C_DeInit(hi2c);
-		HAL_Delay(100);
-		HAL_I2C_Init(hi2c);
-	}
-	return status;
-}
+
 
 void sensors_Init(I2C_HandleTypeDef *hi2c)
 {

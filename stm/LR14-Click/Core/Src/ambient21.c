@@ -1,4 +1,4 @@
-#include "mysensors.h"
+#include "i2c.h"
 #include "ambient21.h"
 
 #define AMBIENT_ADDR      (0x29 << 1) // Shifted for HAL
@@ -22,8 +22,8 @@ typedef enum
 
 // Global or static variable to track state
 static TSL2591_Gain_t _currentGain = TSL2591_GAIN_MED;
-
 static int8_t _isAmbientSensor = 0;	// indicator whether sensor is present
+ambient_t _ambientData = { };
 
 int8_t ambient_Is(I2C_HandleTypeDef *hi2c, int8_t tryInit) //
 {
@@ -52,6 +52,7 @@ HAL_StatusTypeDef ambient_On(I2C_HandleTypeDef *hi2c)
 	HAL_StatusTypeDef status = HAL_ERROR;
 	uint8_t data;
 
+	_ambientData.isDataValid = 0;
 	if (_isAmbientSensor)
 	{
 		do
@@ -79,7 +80,7 @@ HAL_StatusTypeDef ambient_On(I2C_HandleTypeDef *hi2c)
 			if (_isAmbientSensor)
 			{
 				for (data = 0; data < 4; data++)
-					if (ambient_ReadLux(hi2c, NULL) == HAL_OK)
+					if (ambient_ReadLux(hi2c) == HAL_OK)
 						break;	// calibration...., if value obtained, can finish
 			}
 		} while (0);
@@ -110,7 +111,7 @@ HAL_StatusTypeDef ambient_Off(I2C_HandleTypeDef *hi2c)
 
 HAL_StatusTypeDef ambient_Init(I2C_HandleTypeDef *hi2c)
 {
-	HAL_StatusTypeDef status = MY_I2C_IsDeviceReady(hi2c, AMBIENT_ADDR, 2, 2);	// first check
+	HAL_StatusTypeDef status = I2C_IsDeviceReadyMT(hi2c, AMBIENT_ADDR, 2, 2);	// first check
 	if (status == HAL_OK)
 		do
 		{
@@ -166,7 +167,7 @@ static HAL_StatusTypeDef ambient_AdjustGain(I2C_HandleTypeDef *hi2c, uint16_t ra
 /**
  * @brief When calculating Lux, you must use the actual multiplier corresponding to the currentGain
  */
-HAL_StatusTypeDef ambient_ReadLux(I2C_HandleTypeDef *hi2c, float *luxOut) //
+HAL_StatusTypeDef ambient_ReadLux(I2C_HandleTypeDef *hi2c) //
 {
 	uint8_t buffer[4];
 	HAL_StatusTypeDef status = HAL_ERROR;
@@ -220,17 +221,14 @@ HAL_StatusTypeDef ambient_ReadLux(I2C_HandleTypeDef *hi2c, float *luxOut) //
 			// 3. Calculate Lux
 			float atime = 100.0f;
 			float cpl = (atime * multiplier) / 408.0f;
-			float lux = ((float) ch0 - (2.0f * (float) ch1)) / cpl;
-			if (luxOut != NULL)
-			{
-				*luxOut = lux;
-			}
 			if (ch0 < THRESH_MIN || ch0 > THRESH_MAX)
 			{
 				status = HAL_BUSY;
 				break;
 			}
 			status = HAL_OK;
+			_ambientData.isDataValid = 1;
+			_ambientData.lux = ((float) ch0 - (2.0f * (float) ch1)) / cpl;
 		} while (0);
 	}
 	return status;

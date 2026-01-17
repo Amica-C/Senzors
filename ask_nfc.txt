@@ -1,0 +1,65 @@
+I need program in C/H for processing of NFC 4 tag Click based on ST25R3916 chip.
+This code I want to implement in my STM32CubeIDE project. 
+The NFC 4 tag click board is connected via I2C on LR-14 click(RAK) module and INT from NCF 4 click tag
+is joined to GPIOB/GPIO_PIN_5 on main LR14-Click board
+
+I have GPIO pin GPIOB/GPIO_PIN_5 set in STMCubeMX:
+- External interrupt Mode with Falling edge trigger detection
+- Pull-Up
+
+
+My scenario is, if the e.g. Android phone is approaching to NFC tag, the program will get interrupt and my program will read data from MailBox, reacts on
+data/commands coming from phone, processing it and answer back (all in NDEF format)
+
+I want to have the code will be able works for both EEPROM and MailBox
+
+Now I need the function:
+1. HAL_StatusTypeDef nfc4_Init(I2C_HandleTypeDef *hi2c); - initialization of EEPROM, MailBox, Interrupt
+2. void nfc4_ResetEEPROM(I2C_HandleTypeDef *hi2c, uint16_t len); - reset EEPROM
+3. HAL_StatusTypeDef nfc4_WriteEEPROM(I2C_HandleTypeDef *hi2c, uint16_t addr, uint8_t *pData, uint16_t len); - write data to EEPROM
+4. HAL_StatusTypeDef nfc4_ReadEEPROM(I2C_HandleTypeDef *hi2c, uint16_t addr, uint8_t *pData, uint16_t len); - read data from EEPROM
+
+5. HAL_StatusTypeDef nfc4_ProcessMailBox(I2C_HandleTypeDef *hi2c); - processing data from MailBox, internally will be called 
+
+__weak void nfc4_OnMailboxData(uint8_t *data, uint16_t len); if data are ready
+
+6 HAL_StatusTypeDef nfc4_WriteMailBoxNDEF(I2C_HandleTypeDef *hi2c, char *text); - write data in NDEF format
+
+7. Include the password processing - by using of default pwd (8x 0h)
+8. Include possible to change the RF_MNG from 1-0, because phone cannot recognize the NFC tag
+
+In main.c I have:
+
+volatile uint8_t nfc_interrupt_flag = 0;
+
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
+{
+    // Check if the interrupt came from the GPO pin
+    if (GPIO_Pin == NFC_INT_Pin)
+    {
+        nfc_interrupt_flag = 1;
+    }
+}
+
+void nfc4_OnMailboxData(uint8_t *data, uint16_t len)
+{
+    int stop=0;
+
+    // my processing data
+
+}
+
+
+int main(void)
+{
+        if (nfc_interrupt_flag)
+        {
+            writeLog("nfc4 tag interrupt");
+            nfc_interrupt_flag = 0;
+            nfc4_ProcessMailBox(&hi2c2);
+            nfc4_WriteNDEFText(&hi2c2, "my answer");
+        }
+}
+
+
+I want read/write NDEF via mobile application on Android NFC Tools ot ST25 mobile app 

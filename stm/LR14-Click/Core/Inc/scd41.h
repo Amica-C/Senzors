@@ -29,6 +29,7 @@ typedef struct
 	uint16_t co2;		// output
 	float temperature;	// output
 	float humidity;		// output
+    int8_t isDataValid;	// output data valid/invalid.
 } scd41_t;
 
 

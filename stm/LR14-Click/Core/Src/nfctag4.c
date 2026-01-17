@@ -15,7 +15,7 @@
 #define REG_MB_LEN_DYN        0x200E
 #define REG_MB_RAM_START      0x2008
 
-#include "mysensors.h"
+#include "i2c.h"
 #include "nfctag4.h"
 #include <string.h>
 
@@ -142,7 +142,7 @@ HAL_StatusTypeDef nfc4_Init(I2C_HandleTypeDef *hi2c)
 	do
 	{
 		// 1. Wait for device to be ready
-		if ((status = MY_I2C_IsDeviceReady(hi2c, NFC4_I2C_ADDR_USER, 10, 100)) != HAL_OK)
+		if ((status = I2C_IsDeviceReadyMT(hi2c, NFC4_I2C_ADDR_USER, 10, 100)) != HAL_OK)
 			break;
 #if 0
 		// 2. Present Password to modify system registers
