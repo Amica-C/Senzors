@@ -82,6 +82,15 @@ void Uart_Start();
  */
 void OnLoRaWanConnected(void);
 
+/**
+ * @brief Called after date/time has been synchronized from LoRaWAN
+ * 
+ * This function is called when the device receives a time synchronization
+ * response (DeviceTimeAns) from the LoRaWAN server. The RTC has already
+ * been updated with the server's time when this function is called.
+ */
+void OnTimeSynchronized(void);
+
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/

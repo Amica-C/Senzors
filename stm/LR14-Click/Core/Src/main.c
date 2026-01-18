@@ -186,6 +186,35 @@ void OnLoRaWanConnected(void)
 #endif
 }
 
+/**
+ * @brief Called after date/time has been synchronized from LoRaWAN
+ * 
+ * This function is called when the device receives a time synchronization
+ * response (DeviceTimeAns) from the LoRaWAN server. The RTC has already
+ * been updated with the server's time when this function is called.
+ * 
+ * Add your custom code here to perform actions after time synchronization,
+ * such as updating time-dependent schedules, logging the sync event, or
+ * triggering time-based operations.
+ */
+void OnTimeSynchronized(void)
+{
+#ifdef DEBUG
+	RTC_TimeTypeDef sTime = {};
+	RTC_DateTypeDef sDate = {};
+
+	/* Read the synchronized time */
+	HAL_RTC_GetTime(&hrtc, &sTime, RTC_FORMAT_BIN);
+	HAL_RTC_GetDate(&hrtc, &sDate, RTC_FORMAT_BIN);
+
+	writeLog("Time synchronized: %04d-%02d-%02d %02d:%02d:%02d",
+			 2000 + sDate.Year, sDate.Month, sDate.Date,
+			 sTime.Hours, sTime.Minutes, sTime.Seconds);
+#endif
+
+	/* USER CODE: Add your custom actions here after time synchronization */
+}
+
 /* USER CODE END 0 */
 
 /**

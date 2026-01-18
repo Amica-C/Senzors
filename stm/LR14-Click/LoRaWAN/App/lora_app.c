@@ -440,7 +440,7 @@ static void OnBeaconStatusChange(LmHandlerBeaconParams_t *params)
 static void OnSysTimeUpdate(void)
 {
   /* USER CODE BEGIN OnSysTimeUpdate_1 */
-
+  OnTimeSynchronized();
   /* USER CODE END OnSysTimeUpdate_1 */
 }
 
