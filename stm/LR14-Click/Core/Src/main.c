@@ -473,18 +473,46 @@ void LoRaWAN_DataSendScenario(void)
 	uint8_t battery = GetBatteryLevel();
 	sensorDataBuffer[bufferIndex++] = battery;
 
-	// Add temperature (simulated as 2 bytes: integer and decimal part)
-	int16_t temperature = (int16_t)(_tempHumData.temperature * 100.0f);
-	sensorDataBuffer[bufferIndex++] = (temperature >> 8) & 0xFF;
-	sensorDataBuffer[bufferIndex++] = temperature & 0xFF;
+	// Add temperature (2 bytes: integer value * 100)
+	// Check if temperature data is valid before using
+	if (_tempHumData.isDataValid)
+	{
+		int16_t temperature = (int16_t)(_tempHumData.temperature * 100.0f);
+		sensorDataBuffer[bufferIndex++] = (temperature >> 8) & 0xFF;
+		sensorDataBuffer[bufferIndex++] = temperature & 0xFF;
+	}
+	else
+	{
+		// Use default/error value if sensor data not valid
+		sensorDataBuffer[bufferIndex++] = 0xFF;
+		sensorDataBuffer[bufferIndex++] = 0xFF;
+	}
 
 	// Add humidity (1 byte: 0-100%)
-	sensorDataBuffer[bufferIndex++] = (uint8_t)_tempHumData.humidity;
+	// Check if humidity data is valid before using
+	if (_tempHumData.isDataValid)
+	{
+		sensorDataBuffer[bufferIndex++] = (uint8_t)_tempHumData.humidity;
+	}
+	else
+	{
+		sensorDataBuffer[bufferIndex++] = 0xFF;
+	}
 
 	// Add pressure (2 bytes: in hPa * 10)
-	int16_t pressure = (int16_t)(_tempBarometerData.pressure * 10.0f);
-	sensorDataBuffer[bufferIndex++] = (pressure >> 8) & 0xFF;
-	sensorDataBuffer[bufferIndex++] = pressure & 0xFF;
+	// Check if barometer data is valid before using
+	if (_tempBarometerData.isDataValid)
+	{
+		int16_t pressure = (int16_t)(_tempBarometerData.pressure * 10.0f);
+		sensorDataBuffer[bufferIndex++] = (pressure >> 8) & 0xFF;
+		sensorDataBuffer[bufferIndex++] = pressure & 0xFF;
+	}
+	else
+	{
+		// Use default/error value if sensor data not valid
+		sensorDataBuffer[bufferIndex++] = 0xFF;
+		sensorDataBuffer[bufferIndex++] = 0xFF;
+	}
 
 	// Send unconfirmed data
 	status = LoRaWAN_SendSensorData(sensorDataBuffer, bufferIndex, 2);
