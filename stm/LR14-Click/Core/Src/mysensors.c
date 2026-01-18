@@ -39,11 +39,11 @@ static uint32_t _sensorTimeout = 30000;	// interval reading data from sensor
 static uint32_t _sensorSeqID = 0;
 
 // because of power consumtion, the high powered sensor cannot be measure, must be divide to more loops
-enum
+/*enum
 {
 
 };
-
+*/
 static void sensBuffer_Reset()
 {
 	_sensBuffer[0] = '\0';

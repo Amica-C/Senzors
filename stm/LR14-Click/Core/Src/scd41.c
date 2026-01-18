@@ -72,8 +72,8 @@ static HAL_StatusTypeDef scd41_onOff(I2C_HandleTypeDef *hi2c, uint16_t onOff)
 		cmd[0] = (onOff >> 8);
 		cmd[1] = (onOff & 0xFF);
 		status = HAL_I2C_Master_Transmit(hi2c, SCD41_ADDR, cmd, 2, HAL_MAX_DELAY);
-		if (status == HAL_OK)
-			HAL_Delay(500);	// Wait for sensor to process start
+//		if (status == HAL_OK)
+//			HAL_Delay(500);	// Wait for sensor to process start
 		_isScd41 = (status == HAL_OK);
 	}
 	return status;
