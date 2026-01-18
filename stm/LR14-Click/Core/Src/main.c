@@ -33,6 +33,7 @@
 #include "usart_if.h"
 #include "stm32_seq.h"
 #include "LmHandler.h"
+#include "sys_app.h"
 
 /* USER CODE END Includes */
 
@@ -198,6 +199,328 @@ void OnTimeSynchronized(void)
 			 2000 + _currentDate.Year, _currentDate.Month, _currentDate.Date,
 			 _currentTime.Hours, _currentTime.Minutes, _currentTime.Seconds);
 	/* USER CODE: Add your custom actions here after time synchronization */
+}
+
+/**
+ * @brief Send sensor data to LoRaWAN network
+ * 
+ * This function collects sensor data and sends it to the LoRaWAN network.
+ * It uses unconfirmed uplink messages for regular data transmission.
+ * 
+ * @param data Pointer to the data buffer to send
+ * @param dataSize Size of the data in bytes (max 242 bytes)
+ * @param port LoRaWAN application port (typically 2)
+ * @return LmHandlerErrorStatus_t Status of the send operation
+ *         - LORAMAC_HANDLER_SUCCESS: Data queued for transmission
+ *         - LORAMAC_HANDLER_ERROR: Failed to queue data
+ *         - LORAMAC_HANDLER_BUSY_ERROR: MAC layer is busy
+ *         - LORAMAC_HANDLER_NO_NETWORK_JOINED: Not connected to network
+ */
+LmHandlerErrorStatus_t LoRaWAN_SendSensorData(uint8_t *data, uint8_t dataSize, uint8_t port)
+{
+	LmHandlerAppData_t appData;
+	LmHandlerErrorStatus_t status;
+
+	if (data == NULL || dataSize == 0 || dataSize > 242)
+	{
+		writeLog("Invalid data parameters");
+		return LORAMAC_HANDLER_ERROR;
+	}
+
+	appData.Buffer = data;
+	appData.BufferSize = dataSize;
+	appData.Port = port;
+
+	writeLog("Sending data to LoRaWAN: port=%d, size=%d bytes", port, dataSize);
+
+	// Send as unconfirmed message
+	status = LmHandlerSend(&appData, LORAMAC_HANDLER_UNCONFIRMED_MSG, false);
+
+	if (status == LORAMAC_HANDLER_SUCCESS)
+	{
+		writeLog("Data queued for transmission");
+	}
+	else if (status == LORAMAC_HANDLER_NO_NETWORK_JOINED)
+	{
+		writeLog("Cannot send: Not joined to network");
+	}
+	else if (status == LORAMAC_HANDLER_BUSY_ERROR)
+	{
+		writeLog("Cannot send: MAC layer busy");
+	}
+	else
+	{
+		writeLog("Send failed with status: %d", status);
+	}
+
+	return status;
+}
+
+/**
+ * @brief Send confirmed data to LoRaWAN network
+ * 
+ * This function sends data that requires acknowledgment from the server.
+ * The server must respond with a downlink acknowledgment. This is useful
+ * for critical data that must be verified as received.
+ * 
+ * @param data Pointer to the data buffer to send
+ * @param dataSize Size of the data in bytes (max 242 bytes)
+ * @param port LoRaWAN application port (typically 2)
+ * @return LmHandlerErrorStatus_t Status of the send operation
+ *         - LORAMAC_HANDLER_SUCCESS: Data queued for transmission with confirmation
+ *         - LORAMAC_HANDLER_ERROR: Failed to queue data
+ *         - LORAMAC_HANDLER_BUSY_ERROR: MAC layer is busy
+ *         - LORAMAC_HANDLER_NO_NETWORK_JOINED: Not connected to network
+ */
+LmHandlerErrorStatus_t LoRaWAN_SendConfirmedData(uint8_t *data, uint8_t dataSize, uint8_t port)
+{
+	LmHandlerAppData_t appData;
+	LmHandlerErrorStatus_t status;
+
+	if (data == NULL || dataSize == 0 || dataSize > 242)
+	{
+		writeLog("Invalid data parameters");
+		return LORAMAC_HANDLER_ERROR;
+	}
+
+	appData.Buffer = data;
+	appData.BufferSize = dataSize;
+	appData.Port = port;
+
+	writeLog("Sending confirmed data to LoRaWAN: port=%d, size=%d bytes", port, dataSize);
+
+	// Send as confirmed message (requires ACK from server)
+	status = LmHandlerSend(&appData, LORAMAC_HANDLER_CONFIRMED_MSG, false);
+
+	if (status == LORAMAC_HANDLER_SUCCESS)
+	{
+		writeLog("Confirmed data queued for transmission");
+	}
+	else if (status == LORAMAC_HANDLER_NO_NETWORK_JOINED)
+	{
+		writeLog("Cannot send: Not joined to network");
+	}
+	else if (status == LORAMAC_HANDLER_BUSY_ERROR)
+	{
+		writeLog("Cannot send: MAC layer busy");
+	}
+	else
+	{
+		writeLog("Send failed with status: %d", status);
+	}
+
+	return status;
+}
+
+/**
+ * @brief Handle received downlink data from LoRaWAN server
+ * 
+ * This callback function is triggered when the device receives data from the
+ * LoRaWAN server. This can be a response to a confirmed uplink or an
+ * application-level downlink message.
+ * 
+ * @param appData Received application data including buffer and port
+ * @param params Receive parameters including RSSI, SNR, and downlink counter
+ */
+void OnLoRaWANRxData(LmHandlerAppData_t *appData, LmHandlerRxParams_t *params)
+{
+	if (appData == NULL || params == NULL)
+	{
+		writeLog("Invalid RX data parameters");
+		return;
+	}
+
+	writeLog("Received data from server:");
+	writeLog("  Port: %d", appData->Port);
+	writeLog("  Size: %d bytes", appData->BufferSize);
+	writeLog("  RSSI: %d dBm", params->Rssi);
+	writeLog("  SNR: %d dB", params->Snr);
+	writeLog("  Downlink Counter: %lu", params->DownlinkCounter);
+
+	// Process received data based on port
+	if (appData->BufferSize > 0)
+	{
+		writeLog("  Data: ");
+		for (uint8_t i = 0; i < appData->BufferSize && i < 16; i++)
+		{
+			writeLog("0x%02X ", appData->Buffer[i]);
+		}
+
+		// Handle specific commands from server
+		switch (appData->Port)
+		{
+			case 2: // Application data port
+				// Process application-specific commands
+				if (appData->BufferSize >= 1)
+				{
+					uint8_t command = appData->Buffer[0];
+					writeLog("  Command received: 0x%02X", command);
+
+					// Example: handle different commands
+					switch (command)
+					{
+						case 0x01:
+							writeLog("  -> Command: Request immediate sensor reading");
+							// Trigger immediate sensor read
+							break;
+						case 0x02:
+							writeLog("  -> Command: Change reporting interval");
+							if (appData->BufferSize >= 3)
+							{
+								uint16_t interval = (appData->Buffer[1] << 8) | appData->Buffer[2];
+								writeLog("  -> New interval: %d seconds", interval);
+							}
+							break;
+						default:
+							writeLog("  -> Unknown command");
+							break;
+					}
+				}
+				break;
+
+			case 3: // Configuration port
+				writeLog("  Configuration data received");
+				break;
+
+			default:
+				writeLog("  Data on unknown port");
+				break;
+		}
+	}
+
+	// Check if this was an ACK for a confirmed uplink
+	if (params->IsMcpsIndication == 0)
+	{
+		writeLog("  This is an ACK for confirmed uplink");
+	}
+}
+
+/**
+ * @brief Handle transmission event callback
+ * 
+ * This callback is triggered after a transmission attempt, whether successful or not.
+ * It provides information about whether an ACK was received for confirmed messages.
+ * 
+ * @param params Transmission parameters including status and ACK received flag
+ */
+void OnLoRaWANTxData(LmHandlerTxParams_t *params)
+{
+	if (params == NULL)
+	{
+		return;
+	}
+
+	writeLog("Transmission completed:");
+	writeLog("  Uplink Counter: %lu", params->UplinkCounter);
+	writeLog("  Datarate: DR%d", params->Datarate);
+	writeLog("  TX Power: %d dBm", params->TxPower);
+	writeLog("  Channel: %d", params->Channel);
+
+	if (params->MsgType == LORAMAC_HANDLER_CONFIRMED_MSG)
+	{
+		if (params->AckReceived)
+		{
+			writeLog("  Status: ACK received from server");
+		}
+		else
+		{
+			writeLog("  Status: No ACK received (will retry)");
+		}
+	}
+	else
+	{
+		writeLog("  Status: Unconfirmed message sent");
+	}
+
+	if (params->Status != LORAMAC_EVENT_INFO_STATUS_OK)
+	{
+		writeLog("  TX Error: %d", params->Status);
+	}
+}
+
+/**
+ * @brief Complete scenario demonstrating LoRaWAN send and confirmation
+ * 
+ * This function demonstrates a complete scenario of:
+ * 1. Collecting sensor data
+ * 2. Sending unconfirmed data to the server
+ * 3. Sending confirmed data that requires server acknowledgment
+ * 4. Handling server responses
+ * 
+ * This scenario should be called periodically after the device has joined
+ * the LoRaWAN network.
+ */
+void LoRaWAN_DataSendScenario(void)
+{
+	LmHandlerErrorStatus_t status;
+	uint8_t sensorDataBuffer[50];
+	uint8_t bufferIndex = 0;
+
+	writeLog("=== LoRaWAN Data Send Scenario ===");
+
+	// Check if joined to network
+	if (LmHandlerJoinStatus() != LORAMAC_HANDLER_SET)
+	{
+		writeLog("Not joined to LoRaWAN network - cannot send data");
+		return;
+	}
+
+	// Scenario 1: Send unconfirmed sensor data
+	writeLog("\n--- Scenario 1: Unconfirmed Data ---");
+
+	// Collect sensor data into buffer
+	// Format: [battery][temp_high][temp_low][humidity][pressure_high][pressure_low]
+	uint8_t battery = GetBatteryLevel();
+	sensorDataBuffer[bufferIndex++] = battery;
+
+	// Add temperature (simulated as 2 bytes: integer and decimal part)
+	int16_t temperature = (int16_t)(_tempHumData.temperature * 100.0f);
+	sensorDataBuffer[bufferIndex++] = (temperature >> 8) & 0xFF;
+	sensorDataBuffer[bufferIndex++] = temperature & 0xFF;
+
+	// Add humidity (1 byte: 0-100%)
+	sensorDataBuffer[bufferIndex++] = (uint8_t)_tempHumData.humidity;
+
+	// Add pressure (2 bytes: in hPa * 10)
+	int16_t pressure = (int16_t)(_tempBarometerData.pressure * 10.0f);
+	sensorDataBuffer[bufferIndex++] = (pressure >> 8) & 0xFF;
+	sensorDataBuffer[bufferIndex++] = pressure & 0xFF;
+
+	// Send unconfirmed data
+	status = LoRaWAN_SendSensorData(sensorDataBuffer, bufferIndex, 2);
+	if (status == LORAMAC_HANDLER_SUCCESS)
+	{
+		writeLog("Unconfirmed data sent successfully");
+	}
+
+	// Scenario 2: Send confirmed critical data
+	writeLog("\n--- Scenario 2: Confirmed Data ---");
+
+	// Prepare critical data that needs confirmation
+	uint8_t criticalData[10];
+	bufferIndex = 0;
+
+	// Example: Device status report
+	criticalData[bufferIndex++] = 0xAA; // Status marker
+	criticalData[bufferIndex++] = battery;
+	criticalData[bufferIndex++] = 0x01; // Device status: OK
+	GetTimeDate();
+	criticalData[bufferIndex++] = _currentTime.Hours;
+	criticalData[bufferIndex++] = _currentTime.Minutes;
+	criticalData[bufferIndex++] = _currentTime.Seconds;
+
+	// Send confirmed data (requires ACK from server)
+	status = LoRaWAN_SendConfirmedData(criticalData, bufferIndex, 2);
+	if (status == LORAMAC_HANDLER_SUCCESS)
+	{
+		writeLog("Confirmed data queued - waiting for server ACK");
+		writeLog("Server confirmation will be received in OnLoRaWANTxData callback");
+	}
+
+	writeLog("\n=== Scenario Complete ===");
+	writeLog("Note: Actual transmission occurs asynchronously");
+	writeLog("Callbacks (OnLoRaWANTxData, OnLoRaWANRxData) will be triggered");
+	writeLog("when transmission completes and if downlink data is received");
 }
 
 /* USER CODE END 0 */

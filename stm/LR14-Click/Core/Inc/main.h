@@ -93,6 +93,57 @@ void OnLoRaWanConnected(void);
  */
 void OnTimeSynchronized(void);
 
+/**
+ * @brief Send sensor data to LoRaWAN network
+ * 
+ * Sends unconfirmed uplink message to the LoRaWAN network.
+ * 
+ * @param data Pointer to data buffer
+ * @param dataSize Size of data in bytes (max 242)
+ * @param port LoRaWAN application port
+ * @return LmHandlerErrorStatus_t Status of the operation
+ */
+LmHandlerErrorStatus_t LoRaWAN_SendSensorData(uint8_t *data, uint8_t dataSize, uint8_t port);
+
+/**
+ * @brief Send confirmed data to LoRaWAN network
+ * 
+ * Sends confirmed uplink message that requires server acknowledgment.
+ * 
+ * @param data Pointer to data buffer
+ * @param dataSize Size of data in bytes (max 242)
+ * @param port LoRaWAN application port
+ * @return LmHandlerErrorStatus_t Status of the operation
+ */
+LmHandlerErrorStatus_t LoRaWAN_SendConfirmedData(uint8_t *data, uint8_t dataSize, uint8_t port);
+
+/**
+ * @brief Handle received downlink data from LoRaWAN server
+ * 
+ * Callback function triggered when data is received from the server.
+ * 
+ * @param appData Received application data
+ * @param params Receive parameters (RSSI, SNR, etc.)
+ */
+void OnLoRaWANRxData(LmHandlerAppData_t *appData, LmHandlerRxParams_t *params);
+
+/**
+ * @brief Handle transmission event callback
+ * 
+ * Callback triggered after transmission attempt completes.
+ * 
+ * @param params Transmission parameters and status
+ */
+void OnLoRaWANTxData(LmHandlerTxParams_t *params);
+
+/**
+ * @brief Complete scenario demonstrating LoRaWAN send and confirmation
+ * 
+ * Demonstrates collecting sensor data, sending unconfirmed and confirmed
+ * messages, and handling server responses.
+ */
+void LoRaWAN_DataSendScenario(void);
+
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
