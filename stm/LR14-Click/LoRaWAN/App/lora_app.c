@@ -386,6 +386,8 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 static void OnRxData(LmHandlerAppData_t *appData, LmHandlerRxParams_t *params)
 {
   /* USER CODE BEGIN OnRxData_1 */
+  // Call the user-defined handler in main.c
+  OnLoRaWANRxData(appData, params);
   /* USER CODE END OnRxData_1 */
 }
 
@@ -417,6 +419,8 @@ static void OnTxTimerEvent(void *context)
 static void OnTxData(LmHandlerTxParams_t *params)
 {
   /* USER CODE BEGIN OnTxData_1 */
+  // Call the user-defined handler in main.c
+  OnLoRaWANTxData(params);
   /* USER CODE END OnTxData_1 */
 }
 
