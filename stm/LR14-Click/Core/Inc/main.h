@@ -36,6 +36,8 @@ extern "C" {
 
 /* Exported types ------------------------------------------------------------*/
 /* USER CODE BEGIN ET */
+extern RTC_TimeTypeDef _currentTime;
+extern RTC_DateTypeDef _currentDate;
 
 /* USER CODE END ET */
 

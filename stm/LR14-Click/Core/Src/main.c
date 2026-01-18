@@ -38,6 +38,8 @@
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
+RTC_TimeTypeDef _currentTime = {};
+RTC_DateTypeDef _currentDate = {};
 
 /* USER CODE END PTD */
 
@@ -146,14 +148,10 @@ static void Uart_RxProcessing()
 
 static void GetTimeDate()
 {
-	RTC_TimeTypeDef sTime = {};
-	RTC_DateTypeDef sDate = {};
-
 	// 1. Calling this LOCKS the shadow registers
-	HAL_RTC_GetTime(&hrtc, &sTime, RTC_FORMAT_BIN);
-
+	HAL_RTC_GetTime(&hrtc, &_currentTime, RTC_FORMAT_BIN);
 	// 2. Calling this UNLOCKS the shadow registers
-	HAL_RTC_GetDate(&hrtc, &sDate, RTC_FORMAT_BIN);
+	HAL_RTC_GetDate(&hrtc, &_currentDate, RTC_FORMAT_BIN);
 }
 
 /**
@@ -165,16 +163,13 @@ static void GetTimeDate()
  */
 void OnLoRaWanConnected(void)
 {
-#ifdef DEBUG
 	writeLog("LoRaWAN connected successfully!");
-#endif
 
 	/* Request time synchronization from the LoRaWAN server */
 	/* This will trigger the DeviceTimeReq MAC command */
 	/* The response will automatically update the system time via OnSysTimeUpdate callback */
 	LmHandlerErrorStatus_t status = LmHandlerDeviceTimeReq();
 
-#ifdef DEBUG
 	if (status == LORAMAC_HANDLER_SUCCESS)
 	{
 		writeLog("Time synchronization request sent");
@@ -183,7 +178,6 @@ void OnLoRaWanConnected(void)
 	{
 		writeLog("Failed to send time synchronization request");
 	}
-#endif
 }
 
 /**
@@ -199,19 +193,10 @@ void OnLoRaWanConnected(void)
  */
 void OnTimeSynchronized(void)
 {
-#ifdef DEBUG
-	RTC_TimeTypeDef sTime = {};
-	RTC_DateTypeDef sDate = {};
-
-	/* Read the synchronized time */
-	HAL_RTC_GetTime(&hrtc, &sTime, RTC_FORMAT_BIN);
-	HAL_RTC_GetDate(&hrtc, &sDate, RTC_FORMAT_BIN);
-
+	GetTimeDate();
 	writeLog("Time synchronized: %04d-%02d-%02d %02d:%02d:%02d",
-			 2000 + sDate.Year, sDate.Month, sDate.Date,
-			 sTime.Hours, sTime.Minutes, sTime.Seconds);
-#endif
-
+			 2000 + _currentDate.Year, _currentDate.Month, _currentDate.Date,
+			 _currentTime.Hours, _currentTime.Minutes, _currentTime.Seconds);
 	/* USER CODE: Add your custom actions here after time synchronization */
 }
 
@@ -265,7 +250,7 @@ int main(void)
 	sensors_Init(&hi2c2);
 	sensorsSeq_Init(CFG_SEQ_Task_Sensors);
 
-	GetTimeDate();
+	GetTimeDate();	// 1st initialization
 
 	/* USER CODE END 2 */
 
