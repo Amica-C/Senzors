@@ -340,11 +340,18 @@ void OnLoRaWANRxData(LmHandlerAppData_t *appData, LmHandlerRxParams_t *params)
 	// Process received data based on port
 	if (appData->BufferSize > 0)
 	{
-		writeLog("  Data: ");
-		for (uint8_t i = 0; i < appData->BufferSize && i < 16; i++)
+		// Format hex dump as single string for cleaner output
+		char hexDump[64] = {0};
+		int offset = 0;
+		for (uint8_t i = 0; i < appData->BufferSize && i < 16 && offset < 60; i++)
 		{
-			writeLog("0x%02X ", appData->Buffer[i]);
+			offset += sprintf(hexDump + offset, "0x%02X ", appData->Buffer[i]);
 		}
+		if (appData->BufferSize > 16)
+		{
+			sprintf(hexDump + offset, "...");
+		}
+		writeLog("  Data: %s", hexDump);
 
 		// Handle specific commands from server
 		switch (appData->Port)
@@ -389,6 +396,7 @@ void OnLoRaWANRxData(LmHandlerAppData_t *appData, LmHandlerRxParams_t *params)
 	}
 
 	// Check if this was an ACK for a confirmed uplink
+	// IsMcpsIndication == 0 means this is a MAC layer response (ACK), not an application data indication
 	if (params->IsMcpsIndication == 0)
 	{
 		writeLog("  This is an ACK for confirmed uplink");
