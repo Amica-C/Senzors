@@ -73,6 +73,15 @@ void SystemClock_Config(void);
  */
 void Uart_Start();
 
+/**
+ * @brief Called after LoRaWAN successfully connects to the server
+ * 
+ * This function is called when the LoRaWAN join process completes successfully.
+ * It performs time synchronization with the LoRaWAN server by requesting the
+ * device time, which updates the RTC with the server's time.
+ */
+void OnLoRaWanConnected(void);
+
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/

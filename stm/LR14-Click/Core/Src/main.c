@@ -32,6 +32,7 @@
 #include "mysensors.h"
 #include "usart_if.h"
 #include "stm32_seq.h"
+#include "LmHandler.h"
 
 /* USER CODE END Includes */
 
@@ -153,6 +154,36 @@ static void GetTimeDate()
 
 	// 2. Calling this UNLOCKS the shadow registers
 	HAL_RTC_GetDate(&hrtc, &sDate, RTC_FORMAT_BIN);
+}
+
+/**
+ * @brief Called after LoRaWAN successfully connects to the server
+ * 
+ * This function is called when the LoRaWAN join process completes successfully.
+ * It performs time synchronization with the LoRaWAN server by requesting the
+ * device time, which updates the RTC with the server's time.
+ */
+void OnLoRaWanConnected(void)
+{
+#ifdef DEBUG
+	writeLog("LoRaWAN connected successfully!");
+#endif
+
+	// Request time synchronization from the LoRaWAN server
+	// This will trigger the DeviceTimeReq MAC command
+	// The response will automatically update the system time via OnSysTimeUpdate callback
+	LmHandlerErrorStatus_t status = LmHandlerDeviceTimeReq();
+
+#ifdef DEBUG
+	if (status == LORAMAC_HANDLER_SUCCESS)
+	{
+		writeLog("Time synchronization request sent");
+	}
+	else
+	{
+		writeLog("Failed to send time synchronization request");
+	}
+#endif
 }
 
 /* USER CODE END 0 */
