@@ -425,7 +425,7 @@ static void OnJoinRequest(LmHandlerJoinParams_t *joinParams)
   /* USER CODE BEGIN OnJoinRequest_1 */
   if (joinParams != NULL && joinParams->Status == LORAMAC_HANDLER_SUCCESS)
   {
-    // Call the user function when LoRaWAN successfully connects
+    /* Call the user function when LoRaWAN successfully connects */
     OnLoRaWanConnected();
   }
   /* USER CODE END OnJoinRequest_1 */

@@ -169,9 +169,9 @@ void OnLoRaWanConnected(void)
 	writeLog("LoRaWAN connected successfully!");
 #endif
 
-	// Request time synchronization from the LoRaWAN server
-	// This will trigger the DeviceTimeReq MAC command
-	// The response will automatically update the system time via OnSysTimeUpdate callback
+	/* Request time synchronization from the LoRaWAN server */
+	/* This will trigger the DeviceTimeReq MAC command */
+	/* The response will automatically update the system time via OnSysTimeUpdate callback */
 	LmHandlerErrorStatus_t status = LmHandlerDeviceTimeReq();
 
 #ifdef DEBUG
