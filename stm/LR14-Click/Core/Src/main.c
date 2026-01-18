@@ -47,6 +47,14 @@ RTC_DateTypeDef _currentDate = {};
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
 
+// LoRaWAN data formatting constants
+#define MAX_HEX_DUMP_BYTES          16      // Maximum bytes to display in hex dump
+#define HEX_DUMP_BUFFER_SIZE        64      // Buffer size for hex dump string
+#define TEMPERATURE_SCALE_FACTOR    100.0f  // Scale factor for temperature (value * 100)
+#define PRESSURE_SCALE_FACTOR       10.0f   // Scale factor for pressure (value * 10)
+#define STATUS_MARKER_BYTE          0xAA    // Marker byte for status report messages
+#define SENSOR_DATA_INVALID_VALUE   0xFF    // Value to indicate invalid/unavailable sensor data
+
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -341,13 +349,13 @@ void OnLoRaWANRxData(LmHandlerAppData_t *appData, LmHandlerRxParams_t *params)
 	if (appData->BufferSize > 0)
 	{
 		// Format hex dump as single string for cleaner output
-		char hexDump[64] = {0};
+		char hexDump[HEX_DUMP_BUFFER_SIZE] = {0};
 		int offset = 0;
-		for (uint8_t i = 0; i < appData->BufferSize && i < 16 && offset < 60; i++)
+		for (uint8_t i = 0; i < appData->BufferSize && i < MAX_HEX_DUMP_BYTES && offset < (HEX_DUMP_BUFFER_SIZE - 4); i++)
 		{
 			offset += sprintf(hexDump + offset, "0x%02X ", appData->Buffer[i]);
 		}
-		if (appData->BufferSize > 16)
+		if (appData->BufferSize > MAX_HEX_DUMP_BYTES)
 		{
 			sprintf(hexDump + offset, "...");
 		}
@@ -485,15 +493,15 @@ void LoRaWAN_DataSendScenario(void)
 	// Check if temperature data is valid before using
 	if (_tempHumData.isDataValid)
 	{
-		int16_t temperature = (int16_t)(_tempHumData.temperature * 100.0f);
+		int16_t temperature = (int16_t)(_tempHumData.temperature * TEMPERATURE_SCALE_FACTOR);
 		sensorDataBuffer[bufferIndex++] = (temperature >> 8) & 0xFF;
 		sensorDataBuffer[bufferIndex++] = temperature & 0xFF;
 	}
 	else
 	{
 		// Use default/error value if sensor data not valid
-		sensorDataBuffer[bufferIndex++] = 0xFF;
-		sensorDataBuffer[bufferIndex++] = 0xFF;
+		sensorDataBuffer[bufferIndex++] = SENSOR_DATA_INVALID_VALUE;
+		sensorDataBuffer[bufferIndex++] = SENSOR_DATA_INVALID_VALUE;
 	}
 
 	// Add humidity (1 byte: 0-100%)
@@ -504,22 +512,22 @@ void LoRaWAN_DataSendScenario(void)
 	}
 	else
 	{
-		sensorDataBuffer[bufferIndex++] = 0xFF;
+		sensorDataBuffer[bufferIndex++] = SENSOR_DATA_INVALID_VALUE;
 	}
 
 	// Add pressure (2 bytes: in hPa * 10)
 	// Check if barometer data is valid before using
 	if (_tempBarometerData.isDataValid)
 	{
-		int16_t pressure = (int16_t)(_tempBarometerData.pressure * 10.0f);
+		int16_t pressure = (int16_t)(_tempBarometerData.pressure * PRESSURE_SCALE_FACTOR);
 		sensorDataBuffer[bufferIndex++] = (pressure >> 8) & 0xFF;
 		sensorDataBuffer[bufferIndex++] = pressure & 0xFF;
 	}
 	else
 	{
 		// Use default/error value if sensor data not valid
-		sensorDataBuffer[bufferIndex++] = 0xFF;
-		sensorDataBuffer[bufferIndex++] = 0xFF;
+		sensorDataBuffer[bufferIndex++] = SENSOR_DATA_INVALID_VALUE;
+		sensorDataBuffer[bufferIndex++] = SENSOR_DATA_INVALID_VALUE;
 	}
 
 	// Send unconfirmed data
@@ -537,7 +545,7 @@ void LoRaWAN_DataSendScenario(void)
 	bufferIndex = 0;
 
 	// Example: Device status report
-	criticalData[bufferIndex++] = 0xAA; // Status marker
+	criticalData[bufferIndex++] = STATUS_MARKER_BYTE; // Status marker
 	criticalData[bufferIndex++] = battery;
 	criticalData[bufferIndex++] = 0x01; // Device status: OK
 	GetTimeDate();
